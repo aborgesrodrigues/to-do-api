@@ -9,11 +9,12 @@ import (
 	"go.uber.org/zap"
 )
 
-func main() {
-	viper.AutomaticEnv()
-	viper.SetConfigFile(".env")
-	viper.ReadInConfig()
+type handler struct {
+	logger *zap.Logger
+	svc    *service.Service
+}
 
+func newHandler() *handler {
 	logger, err := zap.NewDevelopment()
 	if err != nil {
 		panic("Error creating logger")
@@ -24,39 +25,56 @@ func main() {
 		panic(err)
 	}
 
+	return &handler{
+		logger: logger,
+		svc:    svc,
+	}
+}
+
+func main() {
+	viper.AutomaticEnv()
+	viper.SetConfigFile(".env")
+	viper.ReadInConfig()
+
+	logger, err := zap.NewDevelopment()
+	if err != nil {
+		panic("Error creating logger")
+	}
+
+	hdl := newHandler()
+
 	logger.Info("Server listening.", zap.String("addr", "8080"))
-	if err := http.ListenAndServe(":8080", getRouter(svc)); err != nil {
+	if err := http.ListenAndServe(":8080", getRouter(hdl)); err != nil {
 		logger.Error(err.Error())
 	}
 }
 
-func getRouter(svc *service.Service) *chi.Mux {
+func getRouter(svc *handler) *chi.Mux {
 	r := chi.NewRouter()
 
 	r.Group(func(r chi.Router) {
-		r.Use(svc.LoggerMiddleware)
-		r.Get("/hello", svc.HelloWorld)
+		r.Use(svc.loggerMiddleware)
 
 		r.Route("/users", func(r chi.Router) {
-			r.Get("/", svc.ListUsers)
-			r.Post("/", svc.AddUser)
+			r.Get("/", svc.listUsers)
+			r.Post("/", svc.addUser)
 			r.Route("/{userId}", func(r chi.Router) {
-				r.Use(svc.IdMiddleware)
-				r.Get("/", svc.GetUser)
-				r.Put("/", svc.UpdateUser)
-				r.Delete("/", svc.DeleteUser)
-				r.Get("/tasks", svc.GetUserTasks)
+				r.Use(svc.idMiddleware)
+				r.Get("/", svc.getUser)
+				r.Put("/", svc.updateUser)
+				r.Delete("/", svc.deleteUser)
+				r.Get("/tasks", svc.getUserTasks)
 			})
 		})
 
 		r.Route("/tasks", func(r chi.Router) {
-			r.Get("/", svc.ListTasks)
-			r.Post("/", svc.AddTask)
+			r.Get("/", svc.listTasks)
+			r.Post("/", svc.addTask)
 			r.Route("/{taskId}", func(r chi.Router) {
-				r.Use(svc.IdMiddleware)
-				r.Get("/", svc.GetTask)
-				r.Put("/", svc.UpdateTask)
-				r.Delete("/", svc.DeleteTask)
+				r.Use(svc.idMiddleware)
+				r.Get("/", svc.getTask)
+				r.Put("/", svc.updateTask)
+				r.Delete("/", svc.deleteTask)
 			})
 		})
 	})

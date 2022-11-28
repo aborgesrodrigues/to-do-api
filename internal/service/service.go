@@ -1,9 +1,6 @@
 package service
 
 import (
-	"encoding/json"
-	"net/http"
-
 	"github.com/aborgesrodrigues/to-do-api/internal/db"
 	"go.uber.org/zap"
 )
@@ -21,21 +18,7 @@ func New(cfg Config) (*Service, error) {
 	}
 
 	return &Service{
-		Logger: logger,
-		DB:     db,
+		logger: logger,
+		db:     db,
 	}, nil
-}
-
-func writeResponse(w http.ResponseWriter, status int, message interface{}) {
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(status)
-	json.NewEncoder(w).Encode(message)
-}
-
-func (svc *Service) HelloWorld(w http.ResponseWriter, r *http.Request) {
-	svc.Logger.Info("HelloWorld")
-
-	writeResponse(w, http.StatusOK, map[string]string{
-		"message": "Hello World",
-	})
 }

@@ -11,6 +11,7 @@ func (db *DB) AddTask(task *common.Task) error {
 	`, task.Id, task.UserId, task.Description, task.State)
 
 	if err != nil {
+		db.logger.Error("Error inserting task.")
 		return err
 	}
 
@@ -25,6 +26,7 @@ func (db *DB) UpdateTask(task *common.Task) error {
 	`, task.UserId, task.Description, task.State, task.Id)
 
 	if err != nil {
+		db.logger.Error("Error updating task.")
 		return err
 	}
 
@@ -38,6 +40,7 @@ func (db *DB) GetTask(id string) (*common.Task, error) {
 		WHERE id= $1`, id)
 
 	if err != nil {
+		db.logger.Error("Error retrieving task.")
 		return nil, err
 	}
 
@@ -49,6 +52,7 @@ func (db *DB) GetTask(id string) (*common.Task, error) {
 			&task.Description,
 			&task.State)
 		if err != nil {
+			db.logger.Error("Error mapping database data to struct.")
 			return nil, err
 		}
 	}
@@ -61,18 +65,20 @@ func (db *DB) DeleteTask(id string) error {
 	`, id)
 
 	if err != nil {
+		db.logger.Error("Error deleting task.")
 		return err
 	}
 
 	return nil
 }
 
-func (db *DB) DeleteTasksUser(userId string) error {
+func (db *DB) DeleteUserTasks(userId string) error {
 	_, err := db.db.Exec(`
 		DELETE FROM public.task WHERE user_id = $1
 	`, userId)
 
 	if err != nil {
+		db.logger.Error("Error deleting user tasks.")
 		return err
 	}
 

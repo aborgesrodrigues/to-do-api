@@ -1,19 +1,17 @@
 package db
 
 import (
-	"fmt"
-
 	"github.com/aborgesrodrigues/to-do-api/internal/common"
 )
 
 func (db *DB) AddUser(user *common.User) error {
-	db.logger.Debug(fmt.Sprintf("%#v", user))
 	_, err := db.db.Exec(`
 		INSERT INTO public.user(id, username, name)
 		VALUES($1, $2, $3)
 	`, user.Id, user.Username, user.Name)
 
 	if err != nil {
+		db.logger.Error("Error inserting user.")
 		return err
 	}
 
@@ -28,6 +26,7 @@ func (db *DB) UpdateUser(user *common.User) error {
 	`, user.Username, user.Name, user.Id)
 
 	if err != nil {
+		db.logger.Error("Error updating user.")
 		return err
 	}
 
@@ -41,6 +40,7 @@ func (db *DB) GetUser(id string) (*common.User, error) {
 		WHERE id= $1`, id)
 
 	if err != nil {
+		db.logger.Error("Error retrieving user.")
 		return nil, err
 	}
 
@@ -51,6 +51,7 @@ func (db *DB) GetUser(id string) (*common.User, error) {
 			&user.Username,
 			&user.Name)
 		if err != nil {
+			db.logger.Error("Error mapping database data to struct.")
 			return nil, err
 		}
 	}
@@ -63,6 +64,7 @@ func (db *DB) DeleteUser(id string) error {
 	`, id)
 
 	if err != nil {
+		db.logger.Error("Error deleting user.")
 		return err
 	}
 
@@ -75,6 +77,7 @@ func (db *DB) ListUsers() ([]common.User, error) {
 		FROM public.user`)
 
 	if err != nil {
+		db.logger.Error("Error retrieving users.")
 		return nil, err
 	}
 
@@ -86,6 +89,7 @@ func (db *DB) ListUsers() ([]common.User, error) {
 			&user.Username,
 			&user.Name)
 		if err != nil {
+			db.logger.Error("Error mapping database data to struct.")
 			return nil, err
 		}
 		users = append(users, user)

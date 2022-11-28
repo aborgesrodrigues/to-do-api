@@ -1,112 +1,73 @@
 package service
 
 import (
-	"encoding/json"
-	"net/http"
-
 	"github.com/aborgesrodrigues/to-do-api/internal/common"
 	"github.com/google/uuid"
 	"go.uber.org/zap"
 )
 
-func (svc *Service) AddUser(w http.ResponseWriter, r *http.Request) {
-	request := &common.User{}
-	if err := json.NewDecoder(r.Body).Decode(request); err != nil {
-		svc.Logger.Error("Unable to decode request body.", zap.Error(err))
-		writeResponse(w, http.StatusInternalServerError, err.Error())
-		return
+func (svc *Service) AddUser(user *common.User) error {
+	user.Id = uuid.New().String()
+
+	if err := svc.db.AddUser(user); err != nil {
+		svc.logger.Error("Unable add user.", zap.Error(err))
+		return err
 	}
 
-	// add uuid
-	request.Id = uuid.New().String()
-
-	if err := svc.DB.AddUser(request); err != nil {
-		svc.Logger.Error("Unable add user.", zap.Error(err))
-		writeResponse(w, http.StatusInternalServerError, err.Error())
-		return
-	}
-
-	writeResponse(w, http.StatusCreated, map[string]string{
-		"message": "User Added",
-	})
+	return nil
 }
 
-func (svc *Service) UpdateUser(w http.ResponseWriter, r *http.Request) {
-	request := &common.User{}
-	if err := json.NewDecoder(r.Body).Decode(request); err != nil {
-		svc.Logger.Error("Unable to decode request body.", zap.Error(err))
-		writeResponse(w, http.StatusInternalServerError, err.Error())
-		return
+func (svc *Service) UpdateUser(user *common.User) error {
+	if err := svc.db.UpdateUser(user); err != nil {
+		svc.logger.Error("Unable add user.", zap.Error(err))
+		return err
 	}
 
-	request.Id = r.Context().Value(userIdCtx).(string)
-
-	if err := svc.DB.UpdateUser(request); err != nil {
-		svc.Logger.Error("Unable add user.", zap.Error(err))
-		writeResponse(w, http.StatusInternalServerError, err.Error())
-		return
-	}
-
-	writeResponse(w, http.StatusCreated, map[string]string{
-		"message": "User Updated",
-	})
+	return nil
 }
 
-func (svc *Service) GetUser(w http.ResponseWriter, r *http.Request) {
-	id := r.Context().Value(userIdCtx).(string)
-
-	users, err := svc.DB.GetUser(id)
+func (svc *Service) GetUser(id string) (*common.User, error) {
+	user, err := svc.db.GetUser(id)
 	if err != nil {
-		svc.Logger.Error("Unable to retrieve users.", zap.Error(err))
-		writeResponse(w, http.StatusInternalServerError, err.Error())
-		return
+		svc.logger.Error("Unable to retrieve users.", zap.Error(err))
+		return nil, err
 	}
 
-	writeResponse(w, http.StatusOK, users)
+	return user, nil
 }
 
-func (svc *Service) DeleteUser(w http.ResponseWriter, r *http.Request) {
-	id := r.Context().Value(userIdCtx).(string)
-
+func (svc *Service) DeleteUser(id string) error {
 	// delete user tasks
-	if err := svc.DB.DeleteTasksUser(id); err != nil {
-		svc.Logger.Error("Unable to delete user tasks.", zap.Error(err))
-		writeResponse(w, http.StatusInternalServerError, err.Error())
-		return
+	if err := svc.db.DeleteUserTasks(id); err != nil {
+		svc.logger.Error("Unable to delete user tasks.", zap.Error(err))
+		return err
 	}
 
 	// delete user
-	if err := svc.DB.DeleteUser(id); err != nil {
-		svc.Logger.Error("Unable to delete users.", zap.Error(err))
-		writeResponse(w, http.StatusInternalServerError, err.Error())
-		return
+	if err := svc.db.DeleteUser(id); err != nil {
+		svc.logger.Error("Unable to delete users.", zap.Error(err))
+		return err
 	}
 
-	writeResponse(w, http.StatusOK, map[string]string{
-		"message": "User Deleted",
-	})
+	return nil
 }
 
-func (svc *Service) ListUsers(w http.ResponseWriter, r *http.Request) {
-	users, err := svc.DB.ListUsers()
+func (svc *Service) ListUsers() ([]common.User, error) {
+	users, err := svc.db.ListUsers()
 	if err != nil {
-		svc.Logger.Error("Unable to retrieve users.", zap.Error(err))
-		writeResponse(w, http.StatusInternalServerError, err.Error())
-		return
+		svc.logger.Error("Unable to retrieve users.", zap.Error(err))
+		return nil, err
 	}
 
-	writeResponse(w, http.StatusOK, users)
+	return users, nil
 }
 
-func (svc *Service) GetUserTasks(w http.ResponseWriter, r *http.Request) {
-	id := r.Context().Value(userIdCtx).(string)
-
-	users, err := svc.DB.ListUserTasks(id)
+func (svc *Service) ListUserTasks(id string) ([]common.Task, error) {
+	users, err := svc.db.ListUserTasks(id)
 	if err != nil {
-		svc.Logger.Error("Unable to retrieve user tasks.", zap.Error(err))
-		writeResponse(w, http.StatusInternalServerError, err.Error())
-		return
+		svc.logger.Error("Unable to retrieve user tasks.", zap.Error(err))
+		return nil, err
 	}
 
-	writeResponse(w, http.StatusOK, users)
+	return users, nil
 }

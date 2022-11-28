@@ -1,4 +1,4 @@
-package service
+package main
 
 import (
 	"bytes"
@@ -20,7 +20,7 @@ const (
 	taskIdCtx = ctxKey("taskId")
 )
 
-func (s *Service) IdMiddleware(next http.Handler) http.Handler {
+func (handler *handler) idMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(rw http.ResponseWriter, r *http.Request) {
 		userId := chi.URLParam(r, string(userIdCtx))
 		if userId != "" {
@@ -30,10 +30,10 @@ func (s *Service) IdMiddleware(next http.Handler) http.Handler {
 		if taskId != "" {
 			r = r.WithContext(context.WithValue(r.Context(), taskIdCtx, taskId))
 		}
-		s.Logger.Debug(taskId)
+		handler.logger.Debug(taskId)
 
 		if userId == "" && taskId == "" {
-			s.Logger.Error("User id not passed.")
+			handler.logger.Error("User id not passed.")
 			writeResponse(rw, http.StatusBadRequest, "User id not passed.")
 			return
 		}
@@ -42,7 +42,7 @@ func (s *Service) IdMiddleware(next http.Handler) http.Handler {
 	})
 }
 
-func (s *Service) LoggerMiddleware(next http.Handler) http.Handler {
+func (handler *handler) loggerMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(rw http.ResponseWriter, r *http.Request) {
 		// copy request body
 		var reqBuf bytes.Buffer
@@ -66,7 +66,7 @@ func (s *Service) LoggerMiddleware(next http.Handler) http.Handler {
 			clone.Body = nil
 		}
 
-		s.Logger.Info("request", zap.Any("data", getRequestMetadata(clone)))
+		handler.logger.Info("request", zap.Any("data", getRequestMetadata(clone)))
 
 		// log response
 		respCopy := &http.Response{
@@ -80,7 +80,7 @@ func (s *Service) LoggerMiddleware(next http.Handler) http.Handler {
 			StatusCode:    ww.Status(),
 		}
 
-		s.Logger.Info("response", zap.Any("data", getResponseMetadata(respCopy)))
+		handler.logger.Info("response", zap.Any("data", getResponseMetadata(respCopy)))
 	})
 }
 
