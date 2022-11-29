@@ -12,10 +12,11 @@ run:
 
 .PHONY: test
 test:
-	go test -v ./...
+	@go test -v -timeout 30s -coverprofile=cov.out ./...
+	@go tool cover -func=cov.out
 
 
 .PHONY: generate-mocks
 generate-mocks:
 	mockgen -source internal/db/models.go -destination internal/db/mock/mock_db.go
-	mockgen -source internal/service/models.go -destination internal/servjce/mock/mock_service.go
+	mockgen -source internal/service/models.go -destination internal/service/mock/mock_service.go

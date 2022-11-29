@@ -5,75 +5,11 @@
 package mock_db
 
 import (
-	sql "database/sql"
 	reflect "reflect"
 
 	common "github.com/aborgesrodrigues/to-do-api/internal/common"
 	gomock "github.com/golang/mock/gomock"
 )
-
-// MockSQLInterface is a mock of SQLInterface interface.
-type MockSQLInterface struct {
-	ctrl     *gomock.Controller
-	recorder *MockSQLInterfaceMockRecorder
-}
-
-// MockSQLInterfaceMockRecorder is the mock recorder for MockSQLInterface.
-type MockSQLInterfaceMockRecorder struct {
-	mock *MockSQLInterface
-}
-
-// NewMockSQLInterface creates a new mock instance.
-func NewMockSQLInterface(ctrl *gomock.Controller) *MockSQLInterface {
-	mock := &MockSQLInterface{ctrl: ctrl}
-	mock.recorder = &MockSQLInterfaceMockRecorder{mock}
-	return mock
-}
-
-// EXPECT returns an object that allows the caller to indicate expected use.
-func (m *MockSQLInterface) EXPECT() *MockSQLInterfaceMockRecorder {
-	return m.recorder
-}
-
-// Exec mocks base method.
-func (m *MockSQLInterface) Exec(query string, args ...any) (sql.Result, error) {
-	m.ctrl.T.Helper()
-	varargs := []interface{}{query}
-	for _, a := range args {
-		varargs = append(varargs, a)
-	}
-	ret := m.ctrl.Call(m, "Exec", varargs...)
-	ret0, _ := ret[0].(sql.Result)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// Exec indicates an expected call of Exec.
-func (mr *MockSQLInterfaceMockRecorder) Exec(query interface{}, args ...interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	varargs := append([]interface{}{query}, args...)
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Exec", reflect.TypeOf((*MockSQLInterface)(nil).Exec), varargs...)
-}
-
-// Query mocks base method.
-func (m *MockSQLInterface) Query(query string, args ...any) (*sql.Rows, error) {
-	m.ctrl.T.Helper()
-	varargs := []interface{}{query}
-	for _, a := range args {
-		varargs = append(varargs, a)
-	}
-	ret := m.ctrl.Call(m, "Query", varargs...)
-	ret0, _ := ret[0].(*sql.Rows)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// Query indicates an expected call of Query.
-func (mr *MockSQLInterfaceMockRecorder) Query(query interface{}, args ...interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	varargs := append([]interface{}{query}, args...)
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Query", reflect.TypeOf((*MockSQLInterface)(nil).Query), varargs...)
-}
 
 // MockDBInterface is a mock of DBInterface interface.
 type MockDBInterface struct {

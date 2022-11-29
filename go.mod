@@ -3,6 +3,7 @@ module github.com/aborgesrodrigues/to-do-api
 go 1.18
 
 require (
+	github.com/DATA-DOG/go-sqlmock v1.5.0
 	github.com/go-chi/chi v1.5.4
 	github.com/golang/mock v1.4.4
 	github.com/google/uuid v1.1.2

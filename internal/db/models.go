@@ -7,11 +7,6 @@ import (
 	"go.uber.org/zap"
 )
 
-type SQLInterface interface {
-	Query(query string, args ...any) (*sql.Rows, error)
-	Exec(query string, args ...any) (sql.Result, error)
-}
-
 type DBInterface interface {
 	AddTask(task *common.Task) error
 	UpdateTask(task *common.Task) error
@@ -33,6 +28,6 @@ type Config struct {
 }
 
 type DB struct {
-	db     SQLInterface
+	db     *sql.DB
 	logger *zap.Logger
 }
