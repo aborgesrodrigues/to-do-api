@@ -1,4 +1,4 @@
-package main
+package handlers
 
 import (
 	"os"
@@ -9,14 +9,14 @@ import (
 
 var (
 	logger *zap.Logger
-	hdl    *handler
+	hdl    *Handler
 )
 
 func TestMain(m *testing.M) {
 
 	logger = zap.NewNop()
 
-	hdl = newHandler()
+	hdl = New(logger)
 
 	os.Exit(m.Run())
 }

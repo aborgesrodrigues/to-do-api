@@ -1,11 +1,10 @@
-package main
+package handlers
 
 import (
 	"bytes"
 	"context"
 	"encoding/json"
 	"errors"
-	"fmt"
 	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
@@ -18,7 +17,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestAddUser(t *testing.T) {
+func TestAddTask(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
@@ -26,29 +25,30 @@ func TestAddUser(t *testing.T) {
 	svcInterface := mock_svc.NewMockSVCInterface(ctrl)
 	hdl.svc = svcInterface
 
-	user := &common.User{
-		Username: "username1",
-		Name:     "User Name 1",
+	task := &common.Task{
+		UserId:      "00001",
+		Description: "description 1",
+		State:       "to_do",
 	}
 
 	// We create a ResponseRecorder (which satisfies http.ResponseWriter) to record the response.
-	handler := http.HandlerFunc(hdl.addUser)
+	handler := http.HandlerFunc(hdl.AddTask)
 
-	errAddUser := errors.New("error inserting user")
+	errAddTask := errors.New("error inserting task")
 	tests := map[string]struct {
-		user         *common.User
+		task         *common.Task
 		svcError     error
 		expectedResp string
 	}{
 		"success": {
-			user:         user,
+			task:         task,
 			svcError:     nil,
-			expectedResp: `{"message":"User Added"}`,
+			expectedResp: `{"message":"Task Added"}`,
 		},
 		"fail": {
-			user:         user,
-			svcError:     errAddUser,
-			expectedResp: `"error inserting user"`,
+			task:         task,
+			svcError:     errAddTask,
+			expectedResp: `"error inserting task"`,
 		},
 	}
 
@@ -56,15 +56,15 @@ func TestAddUser(t *testing.T) {
 		t.Run(index, func(t *testing.T) {
 			rr := httptest.NewRecorder()
 			var buf bytes.Buffer
-			err := json.NewEncoder(&buf).Encode(user)
+			err := json.NewEncoder(&buf).Encode(task)
 			assert.NoError(t, err)
 
 			// Create a request to pass to our handler.
-			req := httptest.NewRequest("POST", "/users", ioutil.NopCloser(&buf))
+			req := httptest.NewRequest("POST", "/tasks", ioutil.NopCloser(&buf))
 
 			svcInterface.
 				EXPECT().
-				AddUser(test.user).
+				AddTask(test.task).
 				Return(test.svcError)
 
 			handler.ServeHTTP(rr, req)
@@ -79,7 +79,7 @@ func TestAddUser(t *testing.T) {
 	}
 }
 
-func TestUpdateUser(t *testing.T) {
+func TestUpdateTask(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
@@ -87,33 +87,34 @@ func TestUpdateUser(t *testing.T) {
 	svcInterface := mock_svc.NewMockSVCInterface(ctrl)
 	hdl.svc = svcInterface
 
-	idUser := "0001"
-	user := &common.User{
-		Id:       idUser,
-		Username: "username1",
-		Name:     "User Name 1",
+	idTask := "0001"
+	task := &common.Task{
+		Id:          idTask,
+		UserId:      "00001",
+		Description: "description 1",
+		State:       "to_do",
 	}
 
 	// We create a ResponseRecorder (which satisfies http.ResponseWriter) to record the response.
-	handler := http.HandlerFunc(hdl.updateUser)
+	handler := http.HandlerFunc(hdl.UpdateTask)
 
-	ctx := context.WithValue(context.Background(), userIdCtx, idUser)
+	ctx := context.WithValue(context.Background(), taskIdCtx, idTask)
 
-	errUpdateUser := errors.New("error updating user")
+	errUpdateTask := errors.New("error updating task")
 	tests := map[string]struct {
-		user         *common.User
+		task         *common.Task
 		svcError     error
 		expectedResp string
 	}{
 		"success": {
-			user:         user,
+			task:         task,
 			svcError:     nil,
-			expectedResp: `{"message":"User Updated"}`,
+			expectedResp: `{"message":"Task Updated"}`,
 		},
 		"fail": {
-			user:         user,
-			svcError:     errUpdateUser,
-			expectedResp: `"error updating user"`,
+			task:         task,
+			svcError:     errUpdateTask,
+			expectedResp: `"error updating task"`,
 		},
 	}
 
@@ -121,15 +122,15 @@ func TestUpdateUser(t *testing.T) {
 		t.Run(index, func(t *testing.T) {
 			rr := httptest.NewRecorder()
 			var buf bytes.Buffer
-			err := json.NewEncoder(&buf).Encode(user)
+			err := json.NewEncoder(&buf).Encode(task)
 			assert.NoError(t, err)
 
 			// Create a request to pass to our handler.
-			req := httptest.NewRequest("PUT", "/users/"+idUser, ioutil.NopCloser(&buf)).WithContext(ctx)
+			req := httptest.NewRequest("PUT", "/tasks/"+idTask, ioutil.NopCloser(&buf)).WithContext(ctx)
 
 			svcInterface.
 				EXPECT().
-				UpdateUser(test.user).
+				UpdateTask(test.task).
 				Return(test.svcError)
 
 			handler.ServeHTTP(rr, req)
@@ -144,7 +145,7 @@ func TestUpdateUser(t *testing.T) {
 	}
 }
 
-func TestGetUser(t *testing.T) {
+func TestGetTask(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
@@ -152,30 +153,31 @@ func TestGetUser(t *testing.T) {
 	svcInterface := mock_svc.NewMockSVCInterface(ctrl)
 	hdl.svc = svcInterface
 
-	idUser := "0001"
-	user := &common.User{
-		Id:       idUser,
-		Username: "username1",
-		Name:     "User Name 1",
+	idTask := "0001"
+	task := &common.Task{
+		Id:          idTask,
+		UserId:      "00001",
+		Description: "description 1",
+		State:       "to_do",
 	}
 
 	// We create a ResponseRecorder (which satisfies http.ResponseWriter) to record the response.
-	handler := http.HandlerFunc(hdl.getUser)
+	handler := http.HandlerFunc(hdl.GetTask)
 
-	ctx := context.WithValue(context.Background(), userIdCtx, idUser)
+	ctx := context.WithValue(context.Background(), taskIdCtx, idTask)
 
-	errGetUser := errors.New("error retrieving user")
+	errGetTask := errors.New("error retrieving task")
 	tests := map[string]struct {
 		svcError     error
 		expectedResp string
 	}{
-		"success": {
-			svcError:     nil,
-			expectedResp: `{"id":"0001","username":"username1","name":"User Name 1"}`,
-		},
+		// "success": {
+		// 	svcError:     nil,
+		// 	expectedResp: `{"id":"0001","user_id":"00001","description":"description 1","state":"to_do"}`,
+		// },
 		"fail": {
-			svcError:     errGetUser,
-			expectedResp: `"error retrieving user"`,
+			svcError:     errGetTask,
+			expectedResp: `"error retrieving task"`,
 		},
 	}
 
@@ -183,16 +185,16 @@ func TestGetUser(t *testing.T) {
 		t.Run(index, func(t *testing.T) {
 			rr := httptest.NewRecorder()
 			var buf bytes.Buffer
-			err := json.NewEncoder(&buf).Encode(user)
+			err := json.NewEncoder(&buf).Encode(task)
 			assert.NoError(t, err)
 
 			// Create a request to pass to our handler.
-			req := httptest.NewRequest("GET", "/users/"+idUser, ioutil.NopCloser(&buf)).WithContext(ctx)
+			req := httptest.NewRequest("GET", "/tasks/"+idTask, ioutil.NopCloser(&buf)).WithContext(ctx)
 
 			svcInterface.
 				EXPECT().
-				GetUser(idUser).
-				Return(user, test.svcError)
+				GetTask(idTask).
+				Return(task, test.svcError)
 
 			handler.ServeHTTP(rr, req)
 			if test.svcError == nil {
@@ -205,7 +207,7 @@ func TestGetUser(t *testing.T) {
 	}
 }
 
-func TestDeleteUser(t *testing.T) {
+func TestDeleteTask(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
@@ -213,25 +215,25 @@ func TestDeleteUser(t *testing.T) {
 	svcInterface := mock_svc.NewMockSVCInterface(ctrl)
 	hdl.svc = svcInterface
 
-	idUser := "0001"
+	idTask := "0001"
 
 	// We create a ResponseRecorder (which satisfies http.ResponseWriter) to record the response.
-	handler := http.HandlerFunc(hdl.deleteUser)
+	handler := http.HandlerFunc(hdl.DeleteTask)
 
-	ctx := context.WithValue(context.Background(), userIdCtx, idUser)
+	ctx := context.WithValue(context.Background(), taskIdCtx, idTask)
 
-	errDeleteUser := errors.New("error deleting user")
+	errDeleteTask := errors.New("error deleting task")
 	tests := map[string]struct {
 		svcError     error
 		expectedResp string
 	}{
 		"success": {
 			svcError:     nil,
-			expectedResp: `{"message":"User Deleted"}`,
+			expectedResp: `{"message":"Task Deleted"}`,
 		},
 		"fail": {
-			svcError:     errDeleteUser,
-			expectedResp: `"error deleting user"`,
+			svcError:     errDeleteTask,
+			expectedResp: `"error deleting task"`,
 		},
 	}
 
@@ -240,11 +242,11 @@ func TestDeleteUser(t *testing.T) {
 			rr := httptest.NewRecorder()
 
 			// Create a request to pass to our handler.
-			req := httptest.NewRequest("DELETE", "/users/"+idUser, nil).WithContext(ctx)
+			req := httptest.NewRequest("DELETE", "/tasks/"+idTask, nil).WithContext(ctx)
 
 			svcInterface.
 				EXPECT().
-				DeleteUser(idUser).
+				DeleteTask(idTask).
 				Return(test.svcError)
 
 			handler.ServeHTTP(rr, req)
@@ -259,7 +261,7 @@ func TestDeleteUser(t *testing.T) {
 	}
 }
 
-func TestListUsers(t *testing.T) {
+func TestListTasks(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
@@ -267,71 +269,6 @@ func TestListUsers(t *testing.T) {
 	svcInterface := mock_svc.NewMockSVCInterface(ctrl)
 	hdl.svc = svcInterface
 
-	users := []common.User{
-		{
-			Id:       "0001",
-			Username: "username1",
-			Name:     "User Name 1",
-		},
-		{
-			Id:       "0002",
-			Username: "username2",
-			Name:     "User Name 2",
-		},
-	}
-
-	// We create a ResponseRecorder (which satisfies http.ResponseWriter) to record the response.
-	handler := http.HandlerFunc(hdl.listUsers)
-
-	errGetUsers := errors.New("error retrieving users")
-	tests := map[string]struct {
-		users        []common.User
-		svcError     error
-		expectedResp string
-	}{
-		"success": {
-			users:        users,
-			svcError:     nil,
-			expectedResp: `[{"id":"0001","username":"username1","name":"User Name 1"},{"id":"0002","username":"username2","name":"User Name 2"}]`,
-		},
-		"fail": {
-			svcError:     errGetUsers,
-			expectedResp: `"error retrieving users"`,
-		},
-	}
-
-	for index, test := range tests {
-		t.Run(index, func(t *testing.T) {
-			rr := httptest.NewRecorder()
-
-			// Create a request to pass to our handler.
-			req := httptest.NewRequest("GET", "/users/", nil)
-
-			svcInterface.
-				EXPECT().
-				ListUsers().
-				Return(users, test.svcError)
-
-			handler.ServeHTTP(rr, req)
-			if test.svcError == nil {
-				assert.Equal(t, http.StatusOK, rr.Code)
-			} else {
-				assert.Equal(t, http.StatusInternalServerError, rr.Code)
-			}
-			assert.Equal(t, test.expectedResp, strings.TrimSpace(rr.Body.String()))
-		})
-	}
-}
-
-func TestListUserTasks(t *testing.T) {
-	ctrl := gomock.NewController(t)
-	defer ctrl.Finish()
-
-	// creates service mock
-	svcInterface := mock_svc.NewMockSVCInterface(ctrl)
-	hdl.svc = svcInterface
-
-	idUser := "0001"
 	tasks := []common.Task{
 		{
 			Id:          "0001",
@@ -346,12 +283,11 @@ func TestListUserTasks(t *testing.T) {
 			State:       "to_do",
 		},
 	}
-	ctx := context.WithValue(context.Background(), userIdCtx, idUser)
 
 	// We create a ResponseRecorder (which satisfies http.ResponseWriter) to record the response.
-	handler := http.HandlerFunc(hdl.listUserTasks)
+	handler := http.HandlerFunc(hdl.ListTasks)
 
-	errGetUsers := errors.New("error retrieving users")
+	errGetTasks := errors.New("error retrieving tasks")
 	tests := map[string]struct {
 		tasks        []common.Task
 		svcError     error
@@ -363,8 +299,8 @@ func TestListUserTasks(t *testing.T) {
 			expectedResp: `[{"id":"0001","user_id":"00001","description":"description 1","state":"to_do"},{"id":"0002","user_id":"00002","description":"description 2","state":"to_do"}]`,
 		},
 		"fail": {
-			svcError:     errGetUsers,
-			expectedResp: `"error retrieving users"`,
+			svcError:     errGetTasks,
+			expectedResp: `"error retrieving tasks"`,
 		},
 	}
 
@@ -373,11 +309,11 @@ func TestListUserTasks(t *testing.T) {
 			rr := httptest.NewRecorder()
 
 			// Create a request to pass to our handler.
-			req := httptest.NewRequest("GET", fmt.Sprintf("/users/%s/tasks", idUser), nil).WithContext(ctx)
+			req := httptest.NewRequest("GET", "/tasks/", nil)
 
 			svcInterface.
 				EXPECT().
-				ListUserTasks(idUser).
+				ListTasks().
 				Return(tasks, test.svcError)
 
 			handler.ServeHTTP(rr, req)

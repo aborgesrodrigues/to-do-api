@@ -1,4 +1,4 @@
-package main
+package handlers
 
 import (
 	"encoding/json"
@@ -8,7 +8,7 @@ import (
 	"go.uber.org/zap"
 )
 
-func (handler *handler) addUser(w http.ResponseWriter, r *http.Request) {
+func (handler *Handler) AddUser(w http.ResponseWriter, r *http.Request) {
 	request := &common.User{}
 	if err := json.NewDecoder(r.Body).Decode(request); err != nil {
 		handler.logger.Error("Unable to decode request body.", zap.Error(err))
@@ -27,7 +27,7 @@ func (handler *handler) addUser(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
-func (handler *handler) updateUser(w http.ResponseWriter, r *http.Request) {
+func (handler *Handler) UpdateUser(w http.ResponseWriter, r *http.Request) {
 	request := &common.User{}
 	if err := json.NewDecoder(r.Body).Decode(request); err != nil {
 		handler.logger.Error("Unable to decode request body.", zap.Error(err))
@@ -48,7 +48,7 @@ func (handler *handler) updateUser(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
-func (handler *handler) getUser(w http.ResponseWriter, r *http.Request) {
+func (handler *Handler) GetUser(w http.ResponseWriter, r *http.Request) {
 	id := r.Context().Value(userIdCtx).(string)
 
 	user, err := handler.svc.GetUser(id)
@@ -61,7 +61,7 @@ func (handler *handler) getUser(w http.ResponseWriter, r *http.Request) {
 	writeResponse(w, http.StatusOK, user)
 }
 
-func (handler *handler) deleteUser(w http.ResponseWriter, r *http.Request) {
+func (handler *Handler) DeleteUser(w http.ResponseWriter, r *http.Request) {
 	id := r.Context().Value(userIdCtx).(string)
 
 	// delete user
@@ -76,7 +76,7 @@ func (handler *handler) deleteUser(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
-func (handler *handler) listUsers(w http.ResponseWriter, r *http.Request) {
+func (handler *Handler) ListUsers(w http.ResponseWriter, r *http.Request) {
 	users, err := handler.svc.ListUsers()
 	if err != nil {
 		handler.logger.Error("Unable to retrieve users.", zap.Error(err))
@@ -87,7 +87,7 @@ func (handler *handler) listUsers(w http.ResponseWriter, r *http.Request) {
 	writeResponse(w, http.StatusOK, users)
 }
 
-func (handler *handler) listUserTasks(w http.ResponseWriter, r *http.Request) {
+func (handler *Handler) ListUserTasks(w http.ResponseWriter, r *http.Request) {
 	id := r.Context().Value(userIdCtx).(string)
 
 	users, err := handler.svc.ListUserTasks(id)
