@@ -16,15 +16,14 @@ func (handler *Handler) AddUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err := handler.svc.AddUser(request); err != nil {
+	user, err := handler.svc.AddUser(request)
+	if err != nil {
 		handler.logger.Error("Unable add user.", zap.Error(err))
 		writeResponse(w, http.StatusInternalServerError, err.Error())
 		return
 	}
 
-	writeResponse(w, http.StatusCreated, map[string]string{
-		"message": "User Added",
-	})
+	writeResponse(w, http.StatusCreated, user)
 }
 
 func (handler *Handler) UpdateUser(w http.ResponseWriter, r *http.Request) {
@@ -37,15 +36,14 @@ func (handler *Handler) UpdateUser(w http.ResponseWriter, r *http.Request) {
 
 	request.Id = r.Context().Value(userIdCtx).(string)
 
-	if err := handler.svc.UpdateUser(request); err != nil {
+	user, err := handler.svc.UpdateUser(request)
+	if err != nil {
 		handler.logger.Error("Unable update user.", zap.Error(err))
 		writeResponse(w, http.StatusInternalServerError, err.Error())
 		return
 	}
 
-	writeResponse(w, http.StatusOK, map[string]string{
-		"message": "User Updated",
-	})
+	writeResponse(w, http.StatusOK, user)
 }
 
 func (handler *Handler) GetUser(w http.ResponseWriter, r *http.Request) {

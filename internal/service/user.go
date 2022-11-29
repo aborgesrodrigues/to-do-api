@@ -6,24 +6,24 @@ import (
 	"go.uber.org/zap"
 )
 
-func (svc *Service) AddUser(user *common.User) error {
+func (svc *Service) AddUser(user *common.User) (*common.User, error) {
 	user.Id = uuid.New().String()
 
 	if err := svc.db.AddUser(user); err != nil {
 		svc.logger.Error("Unable add user.", zap.Error(err))
-		return err
+		return nil, err
 	}
 
-	return nil
+	return user, nil
 }
 
-func (svc *Service) UpdateUser(user *common.User) error {
+func (svc *Service) UpdateUser(user *common.User) (*common.User, error) {
 	if err := svc.db.UpdateUser(user); err != nil {
 		svc.logger.Error("Unable add user.", zap.Error(err))
-		return err
+		return nil, err
 	}
 
-	return nil
+	return user, nil
 }
 
 func (svc *Service) GetUser(id string) (*common.User, error) {

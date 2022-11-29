@@ -49,11 +49,12 @@ func (mr *MockSVCInterfaceMockRecorder) AddTask(task interface{}) *gomock.Call {
 }
 
 // AddUser mocks base method.
-func (m *MockSVCInterface) AddUser(user *common.User) error {
+func (m *MockSVCInterface) AddUser(user *common.User) (*common.User, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "AddUser", user)
-	ret0, _ := ret[0].(error)
-	return ret0
+	ret0, _ := ret[0].(*common.User)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
 }
 
 // AddUser indicates an expected call of AddUser.
@@ -180,11 +181,12 @@ func (mr *MockSVCInterfaceMockRecorder) UpdateTask(task interface{}) *gomock.Cal
 }
 
 // UpdateUser mocks base method.
-func (m *MockSVCInterface) UpdateUser(user *common.User) error {
+func (m *MockSVCInterface) UpdateUser(user *common.User) (*common.User, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "UpdateUser", user)
-	ret0, _ := ret[0].(error)
-	return ret0
+	ret0, _ := ret[0].(*common.User)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
 }
 
 // UpdateUser indicates an expected call of UpdateUser.

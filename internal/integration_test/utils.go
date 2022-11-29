@@ -1,26 +1,9 @@
-package main
+package integrationtest
 
 import (
-	"net/http"
-
 	"github.com/aborgesrodrigues/to-do-api/cmd/handlers"
 	"github.com/go-chi/chi/v5"
-	"go.uber.org/zap"
 )
-
-func main() {
-	logger, err := zap.NewDevelopment()
-	if err != nil {
-		panic("Error creating logger")
-	}
-
-	hdl := handlers.New(logger)
-
-	logger.Info("Server listening.", zap.String("addr", "8080"))
-	if err := http.ListenAndServe(":8080", getRouter(hdl)); err != nil {
-		logger.Error(err.Error())
-	}
-}
 
 func getRouter(svc *handlers.Handler) *chi.Mux {
 	r := chi.NewRouter()

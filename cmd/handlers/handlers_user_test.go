@@ -15,6 +15,7 @@ import (
 	"github.com/aborgesrodrigues/to-do-api/internal/common"
 	mock_svc "github.com/aborgesrodrigues/to-do-api/internal/service/mock"
 	"github.com/golang/mock/gomock"
+	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -43,7 +44,7 @@ func TestAddUser(t *testing.T) {
 		"success": {
 			user:         user,
 			svcError:     nil,
-			expectedResp: `{"message":"User Added"}`,
+			expectedResp: `{"id":"","username":"username1","name":"User Name 1"}`,
 		},
 		"fail": {
 			user:         user,
@@ -61,19 +62,31 @@ func TestAddUser(t *testing.T) {
 
 			// Create a request to pass to our handler.
 			req := httptest.NewRequest("POST", "/users", ioutil.NopCloser(&buf))
+			id := uuid.New().String()
+			responseUser := &common.User{
+				Id:       id,
+				Username: test.user.Username,
+				Name:     test.user.Name,
+			}
 
 			svcInterface.
 				EXPECT().
 				AddUser(test.user).
-				Return(test.svcError)
+				Return(responseUser, test.svcError)
 
 			handler.ServeHTTP(rr, req)
+
 			if test.svcError == nil {
 				assert.Equal(t, http.StatusCreated, rr.Code)
+				err = json.NewDecoder(rr.Body).Decode(responseUser)
+				assert.NoError(t, err)
+				assert.Equal(t, id, responseUser.Id)
+				assert.NotEmpty(t, responseUser.Id)
 			} else {
 				assert.Equal(t, http.StatusInternalServerError, rr.Code)
+				assert.Equal(t, test.expectedResp, strings.TrimSpace(rr.Body.String()))
 			}
-			assert.Equal(t, test.expectedResp, strings.TrimSpace(rr.Body.String()))
+
 		})
 
 	}
@@ -108,7 +121,7 @@ func TestUpdateUser(t *testing.T) {
 		"success": {
 			user:         user,
 			svcError:     nil,
-			expectedResp: `{"message":"User Updated"}`,
+			expectedResp: `{"id":"","username":"username1","name":"User Name 1"}`,
 		},
 		"fail": {
 			user:         user,
@@ -130,15 +143,19 @@ func TestUpdateUser(t *testing.T) {
 			svcInterface.
 				EXPECT().
 				UpdateUser(test.user).
-				Return(test.svcError)
+				Return(test.user, test.svcError)
 
 			handler.ServeHTTP(rr, req)
+
 			if test.svcError == nil {
 				assert.Equal(t, http.StatusOK, rr.Code)
+				err = json.NewDecoder(rr.Body).Decode(&test.user)
+				assert.NoError(t, err)
 			} else {
 				assert.Equal(t, http.StatusInternalServerError, rr.Code)
+				assert.Equal(t, test.expectedResp, strings.TrimSpace(rr.Body.String()))
 			}
-			assert.Equal(t, test.expectedResp, strings.TrimSpace(rr.Body.String()))
+
 		})
 
 	}

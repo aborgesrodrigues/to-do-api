@@ -10,11 +10,18 @@ clean:
 run:
 	docker-compose up --build
 
+.PHONY: support
+support:
+	docker-compose up db
+
 .PHONY: test
 test:
 	@go test -v -timeout 30s -coverprofile=cov.out ./...
 	@go tool cover -func=cov.out
 
+.PHONY: integrationtest
+integrationtest:
+	@go test -tags=integration ./internal/integration_test -count=1 -v
 
 .PHONY: generate-mocks
 generate-mocks:

@@ -171,10 +171,10 @@ func TestGetTask(t *testing.T) {
 		svcError     error
 		expectedResp string
 	}{
-		// "success": {
-		// 	svcError:     nil,
-		// 	expectedResp: `{"id":"0001","user_id":"00001","description":"description 1","state":"to_do"}`,
-		// },
+		"success": {
+			svcError:     nil,
+			expectedResp: `{"id":"0001","user_id":"00001","description":"description 1","state":"to_do"}`,
+		},
 		"fail": {
 			svcError:     errGetTask,
 			expectedResp: `"error retrieving task"`,

@@ -31,19 +31,19 @@ func TestAddUser(t *testing.T) {
 	}
 
 	tests := map[string]struct {
-		user         *common.User
-		dbError      error
-		expectedResp error
+		user        *common.User
+		dbError     error
+		expectedErr error
 	}{
 		"success": {
-			user:         user,
-			dbError:      nil,
-			expectedResp: nil,
+			user:        user,
+			dbError:     nil,
+			expectedErr: nil,
 		},
 		"fail": {
-			user:         user,
-			dbError:      errAddUser,
-			expectedResp: errAddUser,
+			user:        user,
+			dbError:     errAddUser,
+			expectedErr: errAddUser,
 		},
 	}
 
@@ -54,8 +54,12 @@ func TestAddUser(t *testing.T) {
 				AddUser(test.user).
 				Return(test.dbError)
 
-			err := svc.AddUser(test.user)
-			assert.Equal(t, err, test.expectedResp)
+			user, err := svc.AddUser(test.user)
+			assert.Equal(t, err, test.expectedErr)
+
+			if test.dbError == nil {
+				assert.NotEmpty(t, user.Id)
+			}
 		})
 
 	}
@@ -82,19 +86,19 @@ func TestUpdateUser(t *testing.T) {
 	}
 
 	tests := map[string]struct {
-		user         *common.User
-		dbError      error
-		expectedResp error
+		user        *common.User
+		dbError     error
+		expectedErr error
 	}{
 		"success": {
-			user:         user,
-			dbError:      nil,
-			expectedResp: nil,
+			user:        user,
+			dbError:     nil,
+			expectedErr: nil,
 		},
 		"fail": {
-			user:         user,
-			dbError:      errAddUser,
-			expectedResp: errAddUser,
+			user:        user,
+			dbError:     errAddUser,
+			expectedErr: errAddUser,
 		},
 	}
 
@@ -105,8 +109,8 @@ func TestUpdateUser(t *testing.T) {
 				UpdateUser(test.user).
 				Return(test.dbError)
 
-			err := svc.UpdateUser(test.user)
-			assert.Equal(t, err, test.expectedResp)
+			_, err := svc.UpdateUser(test.user)
+			assert.Equal(t, err, test.expectedErr)
 		})
 
 	}
