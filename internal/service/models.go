@@ -11,7 +11,6 @@ type SVCInterface interface {
 	UpdateTask(task *common.Task) error
 	GetTask(id string) (*common.Task, error)
 	DeleteTask(id string) error
-	DeleteTasksUser(userId string) error
 	ListTasks() ([]common.Task, error)
 	ListUserTasks(id string) ([]common.Task, error)
 

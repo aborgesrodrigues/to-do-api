@@ -76,20 +76,6 @@ func (mr *MockSVCInterfaceMockRecorder) DeleteTask(id interface{}) *gomock.Call 
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteTask", reflect.TypeOf((*MockSVCInterface)(nil).DeleteTask), id)
 }
 
-// DeleteTasksUser mocks base method.
-func (m *MockSVCInterface) DeleteTasksUser(userId string) error {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "DeleteTasksUser", userId)
-	ret0, _ := ret[0].(error)
-	return ret0
-}
-
-// DeleteTasksUser indicates an expected call of DeleteTasksUser.
-func (mr *MockSVCInterfaceMockRecorder) DeleteTasksUser(userId interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteTasksUser", reflect.TypeOf((*MockSVCInterface)(nil).DeleteTasksUser), userId)
-}
-
 // DeleteUser mocks base method.
 func (m *MockSVCInterface) DeleteUser(id string) error {
 	m.ctrl.T.Helper()

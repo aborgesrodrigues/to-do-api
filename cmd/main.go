@@ -11,7 +11,7 @@ import (
 
 type handler struct {
 	logger *zap.Logger
-	svc    *service.Service
+	svc    service.SVCInterface
 }
 
 func newHandler() *handler {
@@ -63,7 +63,7 @@ func getRouter(svc *handler) *chi.Mux {
 				r.Get("/", svc.getUser)
 				r.Put("/", svc.updateUser)
 				r.Delete("/", svc.deleteUser)
-				r.Get("/tasks", svc.getUserTasks)
+				r.Get("/tasks", svc.listUserTasks)
 			})
 		})
 
