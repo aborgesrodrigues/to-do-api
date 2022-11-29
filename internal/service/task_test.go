@@ -55,8 +55,12 @@ func TestAddTask(t *testing.T) {
 				AddTask(test.task).
 				Return(test.dbError)
 
-			err := svc.AddTask(test.task)
+			task, err := svc.AddTask(test.task)
 			assert.Equal(t, err, test.expectedResp)
+
+			if test.dbError == nil {
+				assert.NotEmpty(t, task.Id)
+			}
 		})
 
 	}
@@ -107,7 +111,7 @@ func TestUpdateTask(t *testing.T) {
 				UpdateTask(test.task).
 				Return(test.dbError)
 
-			err := svc.UpdateTask(test.task)
+			_, err := svc.UpdateTask(test.task)
 			assert.Equal(t, err, test.expectedResp)
 		})
 

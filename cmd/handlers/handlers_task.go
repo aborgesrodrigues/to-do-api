@@ -16,15 +16,14 @@ func (handler *Handler) AddTask(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err := handler.svc.AddTask(request); err != nil {
+	task, err := handler.svc.AddTask(request)
+	if err != nil {
 		handler.logger.Error("Unable add Task.", zap.Error(err))
 		writeResponse(w, http.StatusInternalServerError, err.Error())
 		return
 	}
 
-	writeResponse(w, http.StatusCreated, map[string]string{
-		"message": "Task Added",
-	})
+	writeResponse(w, http.StatusCreated, task)
 }
 
 func (handler *Handler) UpdateTask(w http.ResponseWriter, r *http.Request) {
@@ -36,15 +35,14 @@ func (handler *Handler) UpdateTask(w http.ResponseWriter, r *http.Request) {
 
 	request.Id = r.Context().Value(taskIdCtx).(string)
 
-	if err := handler.svc.UpdateTask(request); err != nil {
+	task, err := handler.svc.UpdateTask(request)
+	if err != nil {
 		handler.logger.Error("Unable add Task.", zap.Error(err))
 		writeResponse(w, http.StatusInternalServerError, err.Error())
 		return
 	}
 
-	writeResponse(w, http.StatusOK, map[string]string{
-		"message": "Task Updated",
-	})
+	writeResponse(w, http.StatusOK, task)
 }
 
 func (handler *Handler) GetTask(w http.ResponseWriter, r *http.Request) {

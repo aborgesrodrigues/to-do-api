@@ -6,25 +6,25 @@ import (
 	"go.uber.org/zap"
 )
 
-func (svc *Service) AddTask(task *common.Task) error {
+func (svc *Service) AddTask(task *common.Task) (*common.Task, error) {
 	// add uuid
 	task.Id = uuid.New().String()
 
 	if err := svc.db.AddTask(task); err != nil {
 		svc.logger.Error("Unable add Task.", zap.Error(err))
-		return err
+		return nil, err
 	}
 
-	return nil
+	return task, nil
 }
 
-func (svc *Service) UpdateTask(task *common.Task) error {
+func (svc *Service) UpdateTask(task *common.Task) (*common.Task, error) {
 	if err := svc.db.UpdateTask(task); err != nil {
 		svc.logger.Error("Unable add Task.", zap.Error(err))
-		return err
+		return nil, err
 	}
 
-	return nil
+	return task, nil
 }
 
 func (svc *Service) GetTask(id string) (*common.Task, error) {

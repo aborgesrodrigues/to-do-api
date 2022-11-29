@@ -7,8 +7,8 @@ import (
 )
 
 type SVCInterface interface {
-	AddTask(task *common.Task) error
-	UpdateTask(task *common.Task) error
+	AddTask(task *common.Task) (*common.Task, error)
+	UpdateTask(task *common.Task) (*common.Task, error)
 	GetTask(id string) (*common.Task, error)
 	DeleteTask(id string) error
 	ListTasks() ([]common.Task, error)

@@ -7,6 +7,7 @@ import (
 	"net/http"
 
 	"github.com/aborgesrodrigues/to-do-api/internal/common"
+	"github.com/google/uuid"
 )
 
 func (s *testSuite) listUsers() []common.User {
@@ -58,8 +59,8 @@ func (s *testSuite) TestAddUser() {
 
 	// add a new user
 	user := &common.User{
-		Username: "username1",
-		Name:     "User 1",
+		Username: "username1" + uuid.New().String(),
+		Name:     "User 1" + uuid.New().String(),
 	}
 	var buf bytes.Buffer
 	err := json.NewEncoder(&buf).Encode(user)
@@ -87,8 +88,8 @@ func (s *testSuite) TestAddUser() {
 
 func (s *testSuite) TestUpdateUser() {
 	lastUser := s.getLastUser()
-	newName := "User Name1"
-	newUsername := "user1"
+	newName := "New User Name1" + uuid.New().String()
+	newUsername := "newuser1"
 	// check user data before update
 	s.Assert().NotEqual(lastUser.Name, newName)
 	s.Assert().NotEqual(lastUser.Username, newUsername)

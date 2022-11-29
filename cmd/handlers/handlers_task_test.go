@@ -14,6 +14,7 @@ import (
 	"github.com/aborgesrodrigues/to-do-api/internal/common"
 	mock_svc "github.com/aborgesrodrigues/to-do-api/internal/service/mock"
 	"github.com/golang/mock/gomock"
+	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -61,19 +62,30 @@ func TestAddTask(t *testing.T) {
 
 			// Create a request to pass to our handler.
 			req := httptest.NewRequest("POST", "/tasks", ioutil.NopCloser(&buf))
+			id := uuid.New().String()
+			responseTask := &common.Task{
+				Id:          id,
+				Description: test.task.Description,
+				UserId:      test.task.UserId,
+				State:       test.task.State,
+			}
 
 			svcInterface.
 				EXPECT().
 				AddTask(test.task).
-				Return(test.svcError)
+				Return(responseTask, test.svcError)
 
 			handler.ServeHTTP(rr, req)
 			if test.svcError == nil {
 				assert.Equal(t, http.StatusCreated, rr.Code)
+				err = json.NewDecoder(rr.Body).Decode(responseTask)
+				assert.NoError(t, err)
+				assert.Equal(t, id, responseTask.Id)
+				assert.NotEmpty(t, responseTask.Id)
 			} else {
 				assert.Equal(t, http.StatusInternalServerError, rr.Code)
+				assert.Equal(t, test.expectedResp, strings.TrimSpace(rr.Body.String()))
 			}
-			assert.Equal(t, test.expectedResp, strings.TrimSpace(rr.Body.String()))
 		})
 
 	}
@@ -131,15 +143,17 @@ func TestUpdateTask(t *testing.T) {
 			svcInterface.
 				EXPECT().
 				UpdateTask(test.task).
-				Return(test.svcError)
+				Return(test.task, test.svcError)
 
 			handler.ServeHTTP(rr, req)
 			if test.svcError == nil {
 				assert.Equal(t, http.StatusOK, rr.Code)
+				err = json.NewDecoder(rr.Body).Decode(&test.task)
+				assert.NoError(t, err)
 			} else {
 				assert.Equal(t, http.StatusInternalServerError, rr.Code)
+				assert.Equal(t, test.expectedResp, strings.TrimSpace(rr.Body.String()))
 			}
-			assert.Equal(t, test.expectedResp, strings.TrimSpace(rr.Body.String()))
 		})
 
 	}
