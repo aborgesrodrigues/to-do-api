@@ -2,31 +2,12 @@ package db
 
 import (
 	"errors"
-	"testing"
 
 	sqlmock "github.com/DATA-DOG/go-sqlmock"
 	"github.com/aborgesrodrigues/to-do-api/internal/common"
-	"github.com/golang/mock/gomock"
-	"github.com/stretchr/testify/assert"
 )
 
-func TestAddTask(t *testing.T) {
-	ctrl := gomock.NewController(t)
-	defer ctrl.Finish()
-
-	cfg := Config{
-		Logger: logger,
-	}
-
-	dbMock, mock, err := sqlmock.New()
-	assert.NoError(t, err)
-	defer dbMock.Close()
-
-	db, err := New(cfg)
-	db.db = dbMock
-
-	assert.NoError(t, err)
-
+func (d *dbTestSuite) TestAddTask() {
 	errAddTask := errors.New("error inserting task")
 	task := &common.Task{
 		UserId:      "0001",
@@ -52,38 +33,22 @@ func TestAddTask(t *testing.T) {
 	}
 
 	for index, test := range tests {
-		t.Run(index, func(t *testing.T) {
-			mockInsert := mock.ExpectExec("INSERT INTO public.task").WithArgs(test.task.Id, test.task.UserId, test.task.Description, test.task.State)
+		d.Run(index, func() {
+			mockInsert := d.mock.ExpectExec("INSERT INTO public.task").WithArgs(test.task.Id, test.task.UserId, test.task.Description, test.task.State)
 			if test.dbError == nil {
 				mockInsert.WillReturnResult(sqlmock.NewResult(1, 1))
 			} else {
 				mockInsert.WillReturnError(test.dbError)
 			}
 
-			err := db.AddTask(test.task)
-			assert.Equal(t, err, test.expectedResp)
+			err := d.db.AddTask(test.task)
+			d.Assert().Equal(err, test.expectedResp)
 		})
 
 	}
 }
 
-func TestUpdateTask(t *testing.T) {
-	ctrl := gomock.NewController(t)
-	defer ctrl.Finish()
-
-	cfg := Config{
-		Logger: logger,
-	}
-
-	dbMock, mock, err := sqlmock.New()
-	assert.NoError(t, err)
-	defer dbMock.Close()
-
-	db, err := New(cfg)
-	db.db = dbMock
-
-	assert.NoError(t, err)
-
+func (d *dbTestSuite) TestUpdateTask() {
 	errAddTask := errors.New("error updating task")
 	task := &common.Task{
 		UserId:      "0001",
@@ -109,38 +74,22 @@ func TestUpdateTask(t *testing.T) {
 	}
 
 	for index, test := range tests {
-		t.Run(index, func(t *testing.T) {
-			mockUpdate := mock.ExpectExec("UPDATE public.task").WithArgs(test.task.UserId, test.task.Description, test.task.State, test.task.Id)
+		d.Run(index, func() {
+			mockUpdate := d.mock.ExpectExec("UPDATE public.task").WithArgs(test.task.UserId, test.task.Description, test.task.State, test.task.Id)
 			if test.dbError == nil {
 				mockUpdate.WillReturnResult(sqlmock.NewResult(1, 1))
 			} else {
 				mockUpdate.WillReturnError(test.dbError)
 			}
 
-			err := db.UpdateTask(test.task)
-			assert.Equal(t, err, test.expectedResp)
+			err := d.db.UpdateTask(test.task)
+			d.Assert().Equal(err, test.expectedResp)
 		})
 
 	}
 }
 
-func TestGetTask(t *testing.T) {
-	ctrl := gomock.NewController(t)
-	defer ctrl.Finish()
-
-	cfg := Config{
-		Logger: logger,
-	}
-
-	dbMock, mock, err := sqlmock.New()
-	assert.NoError(t, err)
-	defer dbMock.Close()
-
-	db, err := New(cfg)
-	db.db = dbMock
-
-	assert.NoError(t, err)
-
+func (d *dbTestSuite) TestGetTask() {
 	errGetTask := errors.New("any error")
 	task := &common.Task{
 		UserId:      "0001",
@@ -171,39 +120,23 @@ func TestGetTask(t *testing.T) {
 	}
 
 	for index, test := range tests {
-		t.Run(index, func(t *testing.T) {
-			mockGet := mock.ExpectQuery("SELECT id, user_id, description, state FROM public.task").WithArgs(test.id)
+		d.Run(index, func() {
+			mockGet := d.mock.ExpectQuery("SELECT id, user_id, description, state FROM public.task").WithArgs(test.id)
 			if test.dbError == nil {
 				mockGet.WillReturnRows(test.dbRowTask)
 			} else {
 				mockGet.WillReturnError(errGetTask)
 			}
 
-			task, err := db.GetTask(test.id)
-			assert.Equal(t, task, test.expectedResp)
-			assert.Equal(t, err, test.expectedErr)
+			task, err := d.db.GetTask(test.id)
+			d.Assert().Equal(task, test.expectedResp)
+			d.Assert().Equal(err, test.expectedErr)
 		})
 
 	}
 }
 
-func TestDeleteTask(t *testing.T) {
-	ctrl := gomock.NewController(t)
-	defer ctrl.Finish()
-
-	cfg := Config{
-		Logger: logger,
-	}
-
-	dbMock, mock, err := sqlmock.New()
-	assert.NoError(t, err)
-	defer dbMock.Close()
-
-	db, err := New(cfg)
-	db.db = dbMock
-
-	assert.NoError(t, err)
-
+func (d *dbTestSuite) TestDeleteTask() {
 	errAddTask := errors.New("error deleting task")
 
 	tests := map[string]struct {
@@ -222,38 +155,22 @@ func TestDeleteTask(t *testing.T) {
 	}
 
 	for index, test := range tests {
-		t.Run(index, func(t *testing.T) {
-			mockUpdate := mock.ExpectExec("DELETE FROM public.task").WithArgs(test.id)
+		d.Run(index, func() {
+			mockUpdate := d.mock.ExpectExec("DELETE FROM public.task").WithArgs(test.id)
 			if test.dbError == nil {
 				mockUpdate.WillReturnResult(sqlmock.NewResult(1, 1))
 			} else {
 				mockUpdate.WillReturnError(test.dbError)
 			}
 
-			err := db.DeleteTask(test.id)
-			assert.Equal(t, err, test.expectedResp)
+			err := d.db.DeleteTask(test.id)
+			d.Assert().Equal(err, test.expectedResp)
 		})
 
 	}
 }
 
-func TestDeleteUserTasks(t *testing.T) {
-	ctrl := gomock.NewController(t)
-	defer ctrl.Finish()
-
-	cfg := Config{
-		Logger: logger,
-	}
-
-	dbMock, mock, err := sqlmock.New()
-	assert.NoError(t, err)
-	defer dbMock.Close()
-
-	db, err := New(cfg)
-	db.db = dbMock
-
-	assert.NoError(t, err)
-
+func (d *dbTestSuite) TestDeleteUserTasks() {
 	errAddTask := errors.New("error deleting task")
 
 	tests := map[string]struct {
@@ -272,38 +189,22 @@ func TestDeleteUserTasks(t *testing.T) {
 	}
 
 	for index, test := range tests {
-		t.Run(index, func(t *testing.T) {
-			mockUpdate := mock.ExpectExec("DELETE FROM public.task").WithArgs(test.id)
+		d.Run(index, func() {
+			mockUpdate := d.mock.ExpectExec("DELETE FROM public.task").WithArgs(test.id)
 			if test.dbError == nil {
 				mockUpdate.WillReturnResult(sqlmock.NewResult(1, 1))
 			} else {
 				mockUpdate.WillReturnError(test.dbError)
 			}
 
-			err := db.DeleteUserTasks(test.id)
-			assert.Equal(t, err, test.expectedResp)
+			err := d.db.DeleteUserTasks(test.id)
+			d.Assert().Equal(err, test.expectedResp)
 		})
 
 	}
 }
 
-func TestListTasks(t *testing.T) {
-	ctrl := gomock.NewController(t)
-	defer ctrl.Finish()
-
-	cfg := Config{
-		Logger: logger,
-	}
-
-	dbMock, mock, err := sqlmock.New()
-	assert.NoError(t, err)
-	defer dbMock.Close()
-
-	db, err := New(cfg)
-	db.db = dbMock
-
-	assert.NoError(t, err)
-
+func (d *dbTestSuite) TestListTasks() {
 	errGetTask := errors.New("any error")
 	listTasks := []common.Task{
 		{
@@ -343,39 +244,23 @@ func TestListTasks(t *testing.T) {
 	}
 
 	for index, test := range tests {
-		t.Run(index, func(t *testing.T) {
-			mockGet := mock.ExpectQuery("SELECT id, user_id, description, state FROM public.task")
+		d.Run(index, func() {
+			mockGet := d.mock.ExpectQuery("SELECT id, user_id, description, state FROM public.task")
 			if test.dbError == nil {
 				mockGet.WillReturnRows(test.dbRowTask)
 			} else {
 				mockGet.WillReturnError(errGetTask)
 			}
 
-			task, err := db.ListTasks()
-			assert.Equal(t, task, test.expectedResp)
-			assert.Equal(t, err, test.expectedErr)
+			task, err := d.db.ListTasks()
+			d.Assert().Equal(task, test.expectedResp)
+			d.Assert().Equal(err, test.expectedErr)
 		})
 
 	}
 }
 
-func TestUserTasks(t *testing.T) {
-	ctrl := gomock.NewController(t)
-	defer ctrl.Finish()
-
-	cfg := Config{
-		Logger: logger,
-	}
-
-	dbMock, mock, err := sqlmock.New()
-	assert.NoError(t, err)
-	defer dbMock.Close()
-
-	db, err := New(cfg)
-	db.db = dbMock
-
-	assert.NoError(t, err)
-
+func (d *dbTestSuite) TestUserTasks() {
 	errGetTask := errors.New("any error")
 	listTasks := []common.Task{
 		{
@@ -416,17 +301,17 @@ func TestUserTasks(t *testing.T) {
 	}
 
 	for index, test := range tests {
-		t.Run(index, func(t *testing.T) {
-			mockGet := mock.ExpectQuery("SELECT id, user_id, description, state FROM public.task")
+		d.Run(index, func() {
+			mockGet := d.mock.ExpectQuery("SELECT id, user_id, description, state FROM public.task")
 			if test.dbError == nil {
 				mockGet.WillReturnRows(test.dbRowTask)
 			} else {
 				mockGet.WillReturnError(errGetTask)
 			}
 
-			task, err := db.ListUserTasks(test.id)
-			assert.Equal(t, task, test.expectedResp)
-			assert.Equal(t, err, test.expectedErr)
+			task, err := d.db.ListUserTasks(test.id)
+			d.Assert().Equal(task, test.expectedResp)
+			d.Assert().Equal(err, test.expectedErr)
 		})
 
 	}

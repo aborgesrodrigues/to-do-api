@@ -46,8 +46,7 @@ func (s *testSuite) SetupSuite() {
 }
 
 func (s *testSuite) TearDownSuite() {
-	// p, _ := os.FindProcess(syscall.Getpid())
-	// p.Signal(syscall.SIGINT)
+
 }
 
 func (s *testSuite) SetupTest() {

@@ -2,31 +2,12 @@ package db
 
 import (
 	"errors"
-	"testing"
 
 	sqlmock "github.com/DATA-DOG/go-sqlmock"
 	"github.com/aborgesrodrigues/to-do-api/internal/common"
-	"github.com/golang/mock/gomock"
-	"github.com/stretchr/testify/assert"
 )
 
-func TestAddUser(t *testing.T) {
-	ctrl := gomock.NewController(t)
-	defer ctrl.Finish()
-
-	cfg := Config{
-		Logger: logger,
-	}
-
-	dbMock, mock, err := sqlmock.New()
-	assert.NoError(t, err)
-	defer dbMock.Close()
-
-	db, err := New(cfg)
-	db.db = dbMock
-
-	assert.NoError(t, err)
-
+func (d *dbTestSuite) TestAddUser() {
 	errAddUser := errors.New("error inserting user")
 	user := &common.User{
 		Username: "username1",
@@ -51,39 +32,23 @@ func TestAddUser(t *testing.T) {
 	}
 
 	for index, test := range tests {
-		t.Run(index, func(t *testing.T) {
-			mockInsert := mock.ExpectExec("INSERT INTO public.user").WithArgs(test.user.Id, test.user.Username, test.user.Name)
+		d.Run(index, func() {
+			mockInsert := d.mock.ExpectExec("INSERT INTO public.user").WithArgs(test.user.Id, test.user.Username, test.user.Name)
 			if test.dbError == nil {
 				mockInsert.WillReturnResult(sqlmock.NewResult(1, 1))
 			} else {
 				mockInsert.WillReturnError(test.dbError)
 			}
 
-			err := db.AddUser(test.user)
-			assert.Equal(t, err, test.expectedResp)
+			err := d.db.AddUser(test.user)
+			d.Assert().Equal(err, test.expectedResp)
 		})
 
 	}
 }
 
-func TestUpdateUser(t *testing.T) {
-	ctrl := gomock.NewController(t)
-	defer ctrl.Finish()
-
-	cfg := Config{
-		Logger: logger,
-	}
-
-	dbMock, mock, err := sqlmock.New()
-	assert.NoError(t, err)
-	defer dbMock.Close()
-
-	db, err := New(cfg)
-	db.db = dbMock
-
-	assert.NoError(t, err)
-
-	errAddUser := errors.New("error updating user")
+func (d *dbTestSuite) TestUpdateUser() {
+	errUpdateUser := errors.New("error updating user")
 	user := &common.User{
 		Username: "username1",
 		Name:     "User Name 1",
@@ -101,44 +66,28 @@ func TestUpdateUser(t *testing.T) {
 		},
 		"fail": {
 			user:         user,
-			dbError:      errAddUser,
-			expectedResp: errAddUser,
+			dbError:      errUpdateUser,
+			expectedResp: errUpdateUser,
 		},
 	}
 
 	for index, test := range tests {
-		t.Run(index, func(t *testing.T) {
-			mockUpdate := mock.ExpectExec("UPDATE public.user").WithArgs(test.user.Username, test.user.Name, test.user.Id)
+		d.Run(index, func() {
+			mockUpdate := d.mock.ExpectExec("UPDATE public.user").WithArgs(test.user.Username, test.user.Name, test.user.Id)
 			if test.dbError == nil {
 				mockUpdate.WillReturnResult(sqlmock.NewResult(1, 1))
 			} else {
 				mockUpdate.WillReturnError(test.dbError)
 			}
 
-			err := db.UpdateUser(test.user)
-			assert.Equal(t, err, test.expectedResp)
+			err := d.db.UpdateUser(test.user)
+			d.Assert().Equal(err, test.expectedResp)
 		})
 
 	}
 }
 
-func TestGetUser(t *testing.T) {
-	ctrl := gomock.NewController(t)
-	defer ctrl.Finish()
-
-	cfg := Config{
-		Logger: logger,
-	}
-
-	dbMock, mock, err := sqlmock.New()
-	assert.NoError(t, err)
-	defer dbMock.Close()
-
-	db, err := New(cfg)
-	db.db = dbMock
-
-	assert.NoError(t, err)
-
+func (d *dbTestSuite) TestGetUser() {
 	errGetUser := errors.New("any error")
 	user := &common.User{
 		Username: "username1",
@@ -168,40 +117,24 @@ func TestGetUser(t *testing.T) {
 	}
 
 	for index, test := range tests {
-		t.Run(index, func(t *testing.T) {
-			mockGet := mock.ExpectQuery("SELECT id, username, name FROM public.user").WithArgs(test.id)
+		d.Run(index, func() {
+			mockGet := d.mock.ExpectQuery("SELECT id, username, name FROM public.user").WithArgs(test.id)
 			if test.dbError == nil {
 				mockGet.WillReturnRows(test.dbRowUser)
 			} else {
 				mockGet.WillReturnError(errGetUser)
 			}
 
-			user, err := db.GetUser(test.id)
-			assert.Equal(t, user, test.expectedResp)
-			assert.Equal(t, err, test.expectedErr)
+			user, err := d.db.GetUser(test.id)
+			d.Assert().Equal(user, test.expectedResp)
+			d.Assert().Equal(err, test.expectedErr)
 		})
 
 	}
 }
 
-func TestDeleteUser(t *testing.T) {
-	ctrl := gomock.NewController(t)
-	defer ctrl.Finish()
-
-	cfg := Config{
-		Logger: logger,
-	}
-
-	dbMock, mock, err := sqlmock.New()
-	assert.NoError(t, err)
-	defer dbMock.Close()
-
-	db, err := New(cfg)
-	db.db = dbMock
-
-	assert.NoError(t, err)
-
-	errAddUser := errors.New("error deleting user")
+func (d *dbTestSuite) TestDeleteUser() {
+	errDeleteUser := errors.New("error deleting user")
 
 	tests := map[string]struct {
 		id           string
@@ -213,45 +146,29 @@ func TestDeleteUser(t *testing.T) {
 			expectedResp: nil,
 		},
 		"fail": {
-			dbError:      errAddUser,
-			expectedResp: errAddUser,
+			dbError:      errDeleteUser,
+			expectedResp: errDeleteUser,
 		},
 	}
 
 	for index, test := range tests {
-		t.Run(index, func(t *testing.T) {
-			mockUpdate := mock.ExpectExec("DELETE FROM public.user").WithArgs(test.id)
+		d.Run(index, func() {
+			mockUpdate := d.mock.ExpectExec("DELETE FROM public.user").WithArgs(test.id)
 			if test.dbError == nil {
 				mockUpdate.WillReturnResult(sqlmock.NewResult(1, 1))
 			} else {
 				mockUpdate.WillReturnError(test.dbError)
 			}
 
-			err := db.DeleteUser(test.id)
-			assert.Equal(t, err, test.expectedResp)
+			err := d.db.DeleteUser(test.id)
+			d.Assert().Equal(err, test.expectedResp)
 		})
 
 	}
 }
 
-func TestListUsers(t *testing.T) {
-	ctrl := gomock.NewController(t)
-	defer ctrl.Finish()
-
-	cfg := Config{
-		Logger: logger,
-	}
-
-	dbMock, mock, err := sqlmock.New()
-	assert.NoError(t, err)
-	defer dbMock.Close()
-
-	db, err := New(cfg)
-	db.db = dbMock
-
-	assert.NoError(t, err)
-
-	errGetUser := errors.New("any error")
+func (d *dbTestSuite) TestListUsers() {
+	errListUsers := errors.New("any error")
 	listUsers := []common.User{
 		{
 			Username: "username1",
@@ -280,25 +197,25 @@ func TestListUsers(t *testing.T) {
 			expectedErr:  nil,
 		},
 		"fail": {
-			dbError:      errGetUser,
+			dbError:      errListUsers,
 			dbRowUser:    nil,
 			expectedResp: nil,
-			expectedErr:  errGetUser,
+			expectedErr:  errListUsers,
 		},
 	}
 
 	for index, test := range tests {
-		t.Run(index, func(t *testing.T) {
-			mockGet := mock.ExpectQuery("SELECT id, username, name FROM public.user")
+		d.Run(index, func() {
+			mockGet := d.mock.ExpectQuery("SELECT id, username, name FROM public.user")
 			if test.dbError == nil {
 				mockGet.WillReturnRows(test.dbRowUser)
 			} else {
-				mockGet.WillReturnError(errGetUser)
+				mockGet.WillReturnError(errListUsers)
 			}
 
-			user, err := db.ListUsers()
-			assert.Equal(t, user, test.expectedResp)
-			assert.Equal(t, err, test.expectedErr)
+			user, err := d.db.ListUsers()
+			d.Assert().Equal(user, test.expectedResp)
+			d.Assert().Equal(err, test.expectedErr)
 		})
 
 	}

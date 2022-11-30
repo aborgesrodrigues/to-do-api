@@ -38,6 +38,6 @@ func (s *svcTestSuite) getDB() *mock_db.MockDBInterfaceMockRecorder {
 	return s.svc.db.(*mock_db.MockDBInterface).EXPECT()
 }
 
-func TestHandlers(t *testing.T) {
+func TestService(t *testing.T) {
 	suite.Run(t, new(svcTestSuite))
 }
