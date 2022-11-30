@@ -26,7 +26,7 @@ test:
 
 .PHONY: integration_test
 integration_test:
-	@go test -tags=integration ./internal/integration_test -count=1 -v
+	@go test -tags=service ./internal/integration_test -count=1 -v
 
 .PHONY: generate-mocks
 generate-mocks:
