@@ -10,30 +10,19 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"strings"
-	"testing"
 
 	"github.com/aborgesrodrigues/to-do-api/internal/common"
-	mock_svc "github.com/aborgesrodrigues/to-do-api/internal/service/mock"
-	"github.com/golang/mock/gomock"
 	"github.com/google/uuid"
-	"github.com/stretchr/testify/assert"
 )
 
-func TestAddUser(t *testing.T) {
-	ctrl := gomock.NewController(t)
-	defer ctrl.Finish()
-
-	// creates service mock
-	svcInterface := mock_svc.NewMockSVCInterface(ctrl)
-	hdl.svc = svcInterface
-
+func (hdl *handlerTestSuite) TestAddUser() {
 	user := &common.User{
 		Username: "username1",
 		Name:     "User Name 1",
 	}
 
 	// We create a ResponseRecorder (which satisfies http.ResponseWriter) to record the response.
-	handler := http.HandlerFunc(hdl.AddUser)
+	handler := http.HandlerFunc(hdl.handler.AddUser)
 
 	errAddUser := errors.New("error inserting user")
 	tests := map[string]struct {
@@ -54,11 +43,11 @@ func TestAddUser(t *testing.T) {
 	}
 
 	for index, test := range tests {
-		t.Run(index, func(t *testing.T) {
+		hdl.Run(index, func() {
 			rr := httptest.NewRecorder()
 			var buf bytes.Buffer
 			err := json.NewEncoder(&buf).Encode(user)
-			assert.NoError(t, err)
+			hdl.Assert().NoError(err)
 
 			// Create a request to pass to our handler.
 			req := httptest.NewRequest("POST", "/users", ioutil.NopCloser(&buf))
@@ -69,22 +58,21 @@ func TestAddUser(t *testing.T) {
 				Name:     test.user.Name,
 			}
 
-			svcInterface.
-				EXPECT().
+			hdl.getService().
 				AddUser(test.user).
 				Return(responseUser, test.svcError)
 
 			handler.ServeHTTP(rr, req)
 
 			if test.svcError == nil {
-				assert.Equal(t, http.StatusCreated, rr.Code)
+				hdl.Assert().Equal(http.StatusCreated, rr.Code)
 				err = json.NewDecoder(rr.Body).Decode(responseUser)
-				assert.NoError(t, err)
-				assert.Equal(t, id, responseUser.Id)
-				assert.NotEmpty(t, responseUser.Id)
+				hdl.Assert().NoError(err)
+				hdl.Assert().Equal(id, responseUser.Id)
+				hdl.Assert().NotEmpty(responseUser.Id)
 			} else {
-				assert.Equal(t, http.StatusInternalServerError, rr.Code)
-				assert.Equal(t, test.expectedResp, strings.TrimSpace(rr.Body.String()))
+				hdl.Assert().Equal(http.StatusInternalServerError, rr.Code)
+				hdl.Assert().Equal(test.expectedResp, strings.TrimSpace(rr.Body.String()))
 			}
 
 		})
@@ -92,14 +80,7 @@ func TestAddUser(t *testing.T) {
 	}
 }
 
-func TestUpdateUser(t *testing.T) {
-	ctrl := gomock.NewController(t)
-	defer ctrl.Finish()
-
-	// creates service mock
-	svcInterface := mock_svc.NewMockSVCInterface(ctrl)
-	hdl.svc = svcInterface
-
+func (hdl *handlerTestSuite) TestUpdateUser() {
 	idUser := "0001"
 	user := &common.User{
 		Id:       idUser,
@@ -108,7 +89,7 @@ func TestUpdateUser(t *testing.T) {
 	}
 
 	// We create a ResponseRecorder (which satisfies http.ResponseWriter) to record the response.
-	handler := http.HandlerFunc(hdl.UpdateUser)
+	handler := http.HandlerFunc(hdl.handler.UpdateUser)
 
 	ctx := context.WithValue(context.Background(), userIdCtx, idUser)
 
@@ -131,29 +112,28 @@ func TestUpdateUser(t *testing.T) {
 	}
 
 	for index, test := range tests {
-		t.Run(index, func(t *testing.T) {
+		hdl.Run(index, func() {
 			rr := httptest.NewRecorder()
 			var buf bytes.Buffer
 			err := json.NewEncoder(&buf).Encode(user)
-			assert.NoError(t, err)
+			hdl.Assert().NoError(err)
 
 			// Create a request to pass to our handler.
 			req := httptest.NewRequest("PUT", "/users/"+idUser, ioutil.NopCloser(&buf)).WithContext(ctx)
 
-			svcInterface.
-				EXPECT().
+			hdl.getService().
 				UpdateUser(test.user).
 				Return(test.user, test.svcError)
 
 			handler.ServeHTTP(rr, req)
 
 			if test.svcError == nil {
-				assert.Equal(t, http.StatusOK, rr.Code)
+				hdl.Assert().Equal(http.StatusOK, rr.Code)
 				err = json.NewDecoder(rr.Body).Decode(&test.user)
-				assert.NoError(t, err)
+				hdl.Assert().NoError(err)
 			} else {
-				assert.Equal(t, http.StatusInternalServerError, rr.Code)
-				assert.Equal(t, test.expectedResp, strings.TrimSpace(rr.Body.String()))
+				hdl.Assert().Equal(http.StatusInternalServerError, rr.Code)
+				hdl.Assert().Equal(test.expectedResp, strings.TrimSpace(rr.Body.String()))
 			}
 
 		})
@@ -161,14 +141,7 @@ func TestUpdateUser(t *testing.T) {
 	}
 }
 
-func TestGetUser(t *testing.T) {
-	ctrl := gomock.NewController(t)
-	defer ctrl.Finish()
-
-	// creates service mock
-	svcInterface := mock_svc.NewMockSVCInterface(ctrl)
-	hdl.svc = svcInterface
-
+func (hdl *handlerTestSuite) TestGetUser() {
 	idUser := "0001"
 	user := &common.User{
 		Id:       idUser,
@@ -177,7 +150,7 @@ func TestGetUser(t *testing.T) {
 	}
 
 	// We create a ResponseRecorder (which satisfies http.ResponseWriter) to record the response.
-	handler := http.HandlerFunc(hdl.GetUser)
+	handler := http.HandlerFunc(hdl.handler.GetUser)
 
 	ctx := context.WithValue(context.Background(), userIdCtx, idUser)
 
@@ -197,43 +170,35 @@ func TestGetUser(t *testing.T) {
 	}
 
 	for index, test := range tests {
-		t.Run(index, func(t *testing.T) {
+		hdl.Run(index, func() {
 			rr := httptest.NewRecorder()
 			var buf bytes.Buffer
 			err := json.NewEncoder(&buf).Encode(user)
-			assert.NoError(t, err)
+			hdl.Assert().NoError(err)
 
 			// Create a request to pass to our handler.
 			req := httptest.NewRequest("GET", "/users/"+idUser, ioutil.NopCloser(&buf)).WithContext(ctx)
 
-			svcInterface.
-				EXPECT().
+			hdl.getService().
 				GetUser(idUser).
 				Return(user, test.svcError)
 
 			handler.ServeHTTP(rr, req)
 			if test.svcError == nil {
-				assert.Equal(t, http.StatusOK, rr.Code)
+				hdl.Assert().Equal(http.StatusOK, rr.Code)
 			} else {
-				assert.Equal(t, http.StatusInternalServerError, rr.Code)
+				hdl.Assert().Equal(http.StatusInternalServerError, rr.Code)
 			}
-			assert.Equal(t, test.expectedResp, strings.TrimSpace(rr.Body.String()))
+			hdl.Assert().Equal(test.expectedResp, strings.TrimSpace(rr.Body.String()))
 		})
 	}
 }
 
-func TestDeleteUser(t *testing.T) {
-	ctrl := gomock.NewController(t)
-	defer ctrl.Finish()
-
-	// creates service mock
-	svcInterface := mock_svc.NewMockSVCInterface(ctrl)
-	hdl.svc = svcInterface
-
+func (hdl *handlerTestSuite) TestDeleteUser() {
 	idUser := "0001"
 
 	// We create a ResponseRecorder (which satisfies http.ResponseWriter) to record the response.
-	handler := http.HandlerFunc(hdl.DeleteUser)
+	handler := http.HandlerFunc(hdl.handler.DeleteUser)
 
 	ctx := context.WithValue(context.Background(), userIdCtx, idUser)
 
@@ -253,37 +218,29 @@ func TestDeleteUser(t *testing.T) {
 	}
 
 	for index, test := range tests {
-		t.Run(index, func(t *testing.T) {
+		hdl.Run(index, func() {
 			rr := httptest.NewRecorder()
 
 			// Create a request to pass to our handler.
 			req := httptest.NewRequest("DELETE", "/users/"+idUser, nil).WithContext(ctx)
 
-			svcInterface.
-				EXPECT().
+			hdl.getService().
 				DeleteUser(idUser).
 				Return(test.svcError)
 
 			handler.ServeHTTP(rr, req)
 			if test.svcError == nil {
-				assert.Equal(t, http.StatusOK, rr.Code)
+				hdl.Assert().Equal(http.StatusOK, rr.Code)
 			} else {
-				assert.Equal(t, http.StatusInternalServerError, rr.Code)
+				hdl.Assert().Equal(http.StatusInternalServerError, rr.Code)
 			}
-			assert.Equal(t, test.expectedResp, strings.TrimSpace(rr.Body.String()))
+			hdl.Assert().Equal(test.expectedResp, strings.TrimSpace(rr.Body.String()))
 		})
 
 	}
 }
 
-func TestListUsers(t *testing.T) {
-	ctrl := gomock.NewController(t)
-	defer ctrl.Finish()
-
-	// creates service mock
-	svcInterface := mock_svc.NewMockSVCInterface(ctrl)
-	hdl.svc = svcInterface
-
+func (hdl *handlerTestSuite) TestListUsers() {
 	users := []common.User{
 		{
 			Id:       "0001",
@@ -298,7 +255,7 @@ func TestListUsers(t *testing.T) {
 	}
 
 	// We create a ResponseRecorder (which satisfies http.ResponseWriter) to record the response.
-	handler := http.HandlerFunc(hdl.ListUsers)
+	handler := http.HandlerFunc(hdl.handler.ListUsers)
 
 	errGetUsers := errors.New("error retrieving users")
 	tests := map[string]struct {
@@ -318,36 +275,28 @@ func TestListUsers(t *testing.T) {
 	}
 
 	for index, test := range tests {
-		t.Run(index, func(t *testing.T) {
+		hdl.Run(index, func() {
 			rr := httptest.NewRecorder()
 
 			// Create a request to pass to our handler.
 			req := httptest.NewRequest("GET", "/users/", nil)
 
-			svcInterface.
-				EXPECT().
+			hdl.getService().
 				ListUsers().
 				Return(users, test.svcError)
 
 			handler.ServeHTTP(rr, req)
 			if test.svcError == nil {
-				assert.Equal(t, http.StatusOK, rr.Code)
+				hdl.Assert().Equal(http.StatusOK, rr.Code)
 			} else {
-				assert.Equal(t, http.StatusInternalServerError, rr.Code)
+				hdl.Assert().Equal(http.StatusInternalServerError, rr.Code)
 			}
-			assert.Equal(t, test.expectedResp, strings.TrimSpace(rr.Body.String()))
+			hdl.Assert().Equal(test.expectedResp, strings.TrimSpace(rr.Body.String()))
 		})
 	}
 }
 
-func TestListUserTasks(t *testing.T) {
-	ctrl := gomock.NewController(t)
-	defer ctrl.Finish()
-
-	// creates service mock
-	svcInterface := mock_svc.NewMockSVCInterface(ctrl)
-	hdl.svc = svcInterface
-
+func (hdl *handlerTestSuite) TestListUserTasks() {
 	idUser := "0001"
 	tasks := []common.Task{
 		{
@@ -366,7 +315,7 @@ func TestListUserTasks(t *testing.T) {
 	ctx := context.WithValue(context.Background(), userIdCtx, idUser)
 
 	// We create a ResponseRecorder (which satisfies http.ResponseWriter) to record the response.
-	handler := http.HandlerFunc(hdl.ListUserTasks)
+	handler := http.HandlerFunc(hdl.handler.ListUserTasks)
 
 	errGetUsers := errors.New("error retrieving users")
 	tests := map[string]struct {
@@ -386,24 +335,23 @@ func TestListUserTasks(t *testing.T) {
 	}
 
 	for index, test := range tests {
-		t.Run(index, func(t *testing.T) {
+		hdl.Run(index, func() {
 			rr := httptest.NewRecorder()
 
 			// Create a request to pass to our handler.
 			req := httptest.NewRequest("GET", fmt.Sprintf("/users/%s/tasks", idUser), nil).WithContext(ctx)
 
-			svcInterface.
-				EXPECT().
+			hdl.getService().
 				ListUserTasks(idUser).
 				Return(tasks, test.svcError)
 
 			handler.ServeHTTP(rr, req)
 			if test.svcError == nil {
-				assert.Equal(t, http.StatusOK, rr.Code)
+				hdl.Assert().Equal(http.StatusOK, rr.Code)
 			} else {
-				assert.Equal(t, http.StatusInternalServerError, rr.Code)
+				hdl.Assert().Equal(http.StatusInternalServerError, rr.Code)
 			}
-			assert.Equal(t, test.expectedResp, strings.TrimSpace(rr.Body.String()))
+			hdl.Assert().Equal(test.expectedResp, strings.TrimSpace(rr.Body.String()))
 		})
 	}
 }

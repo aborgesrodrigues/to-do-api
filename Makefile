@@ -14,13 +14,18 @@ run:
 support:
 	docker-compose up db
 
-.PHONY: test
-test:
+.PHONY: complete_test
+complete_test:
 	@go test -v -timeout 30s -coverprofile=cov.out ./...
 	@go tool cover -func=cov.out
 
-.PHONY: integrationtest
-integrationtest:
+.PHONY: test
+test:
+	@go test -tags=unit -v -timeout 30s -coverprofile=cov.out ./...
+	@go tool cover -func=cov.out
+
+.PHONY: integration_test
+integration_test:
 	@go test -tags=integration ./internal/integration_test -count=1 -v
 
 .PHONY: generate-mocks

@@ -9,23 +9,12 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"strings"
-	"testing"
 
 	"github.com/aborgesrodrigues/to-do-api/internal/common"
-	mock_svc "github.com/aborgesrodrigues/to-do-api/internal/service/mock"
-	"github.com/golang/mock/gomock"
 	"github.com/google/uuid"
-	"github.com/stretchr/testify/assert"
 )
 
-func TestAddTask(t *testing.T) {
-	ctrl := gomock.NewController(t)
-	defer ctrl.Finish()
-
-	// creates service mock
-	svcInterface := mock_svc.NewMockSVCInterface(ctrl)
-	hdl.svc = svcInterface
-
+func (hdl *handlerTestSuite) TestAddTask() {
 	task := &common.Task{
 		UserId:      "00001",
 		Description: "description 1",
@@ -33,7 +22,7 @@ func TestAddTask(t *testing.T) {
 	}
 
 	// We create a ResponseRecorder (which satisfies http.ResponseWriter) to record the response.
-	handler := http.HandlerFunc(hdl.AddTask)
+	handler := http.HandlerFunc(hdl.handler.AddTask)
 
 	errAddTask := errors.New("error inserting task")
 	tests := map[string]struct {
@@ -54,11 +43,11 @@ func TestAddTask(t *testing.T) {
 	}
 
 	for index, test := range tests {
-		t.Run(index, func(t *testing.T) {
+		hdl.Run(index, func() {
 			rr := httptest.NewRecorder()
 			var buf bytes.Buffer
 			err := json.NewEncoder(&buf).Encode(task)
-			assert.NoError(t, err)
+			hdl.Assert().NoError(err)
 
 			// Create a request to pass to our handler.
 			req := httptest.NewRequest("POST", "/tasks", ioutil.NopCloser(&buf))
@@ -70,35 +59,27 @@ func TestAddTask(t *testing.T) {
 				State:       test.task.State,
 			}
 
-			svcInterface.
-				EXPECT().
+			hdl.getService().
 				AddTask(test.task).
 				Return(responseTask, test.svcError)
 
 			handler.ServeHTTP(rr, req)
 			if test.svcError == nil {
-				assert.Equal(t, http.StatusCreated, rr.Code)
+				hdl.Assert().Equal(http.StatusCreated, rr.Code)
 				err = json.NewDecoder(rr.Body).Decode(responseTask)
-				assert.NoError(t, err)
-				assert.Equal(t, id, responseTask.Id)
-				assert.NotEmpty(t, responseTask.Id)
+				hdl.Assert().NoError(err)
+				hdl.Assert().Equal(id, responseTask.Id)
+				hdl.Assert().NotEmpty(responseTask.Id)
 			} else {
-				assert.Equal(t, http.StatusInternalServerError, rr.Code)
-				assert.Equal(t, test.expectedResp, strings.TrimSpace(rr.Body.String()))
+				hdl.Assert().Equal(http.StatusInternalServerError, rr.Code)
+				hdl.Assert().Equal(test.expectedResp, strings.TrimSpace(rr.Body.String()))
 			}
 		})
 
 	}
 }
 
-func TestUpdateTask(t *testing.T) {
-	ctrl := gomock.NewController(t)
-	defer ctrl.Finish()
-
-	// creates service mock
-	svcInterface := mock_svc.NewMockSVCInterface(ctrl)
-	hdl.svc = svcInterface
-
+func (hdl *handlerTestSuite) TestUpdateTask() {
 	idTask := "0001"
 	task := &common.Task{
 		Id:          idTask,
@@ -108,7 +89,7 @@ func TestUpdateTask(t *testing.T) {
 	}
 
 	// We create a ResponseRecorder (which satisfies http.ResponseWriter) to record the response.
-	handler := http.HandlerFunc(hdl.UpdateTask)
+	handler := http.HandlerFunc(hdl.handler.UpdateTask)
 
 	ctx := context.WithValue(context.Background(), taskIdCtx, idTask)
 
@@ -131,42 +112,34 @@ func TestUpdateTask(t *testing.T) {
 	}
 
 	for index, test := range tests {
-		t.Run(index, func(t *testing.T) {
+		hdl.Run(index, func() {
 			rr := httptest.NewRecorder()
 			var buf bytes.Buffer
 			err := json.NewEncoder(&buf).Encode(task)
-			assert.NoError(t, err)
+			hdl.Assert().NoError(err)
 
 			// Create a request to pass to our handler.
 			req := httptest.NewRequest("PUT", "/tasks/"+idTask, ioutil.NopCloser(&buf)).WithContext(ctx)
 
-			svcInterface.
-				EXPECT().
+			hdl.getService().
 				UpdateTask(test.task).
 				Return(test.task, test.svcError)
 
 			handler.ServeHTTP(rr, req)
 			if test.svcError == nil {
-				assert.Equal(t, http.StatusOK, rr.Code)
+				hdl.Assert().Equal(http.StatusOK, rr.Code)
 				err = json.NewDecoder(rr.Body).Decode(&test.task)
-				assert.NoError(t, err)
+				hdl.Assert().NoError(err)
 			} else {
-				assert.Equal(t, http.StatusInternalServerError, rr.Code)
-				assert.Equal(t, test.expectedResp, strings.TrimSpace(rr.Body.String()))
+				hdl.Assert().Equal(http.StatusInternalServerError, rr.Code)
+				hdl.Assert().Equal(test.expectedResp, strings.TrimSpace(rr.Body.String()))
 			}
 		})
 
 	}
 }
 
-func TestGetTask(t *testing.T) {
-	ctrl := gomock.NewController(t)
-	defer ctrl.Finish()
-
-	// creates service mock
-	svcInterface := mock_svc.NewMockSVCInterface(ctrl)
-	hdl.svc = svcInterface
-
+func (hdl *handlerTestSuite) TestGetTask() {
 	idTask := "0001"
 	task := &common.Task{
 		Id:          idTask,
@@ -176,7 +149,7 @@ func TestGetTask(t *testing.T) {
 	}
 
 	// We create a ResponseRecorder (which satisfies http.ResponseWriter) to record the response.
-	handler := http.HandlerFunc(hdl.GetTask)
+	handler := http.HandlerFunc(hdl.handler.GetTask)
 
 	ctx := context.WithValue(context.Background(), taskIdCtx, idTask)
 
@@ -196,43 +169,35 @@ func TestGetTask(t *testing.T) {
 	}
 
 	for index, test := range tests {
-		t.Run(index, func(t *testing.T) {
+		hdl.Run(index, func() {
 			rr := httptest.NewRecorder()
 			var buf bytes.Buffer
 			err := json.NewEncoder(&buf).Encode(task)
-			assert.NoError(t, err)
+			hdl.Assert().NoError(err)
 
 			// Create a request to pass to our handler.
 			req := httptest.NewRequest("GET", "/tasks/"+idTask, ioutil.NopCloser(&buf)).WithContext(ctx)
 
-			svcInterface.
-				EXPECT().
+			hdl.getService().
 				GetTask(idTask).
 				Return(task, test.svcError)
 
 			handler.ServeHTTP(rr, req)
 			if test.svcError == nil {
-				assert.Equal(t, http.StatusOK, rr.Code)
+				hdl.Assert().Equal(http.StatusOK, rr.Code)
 			} else {
-				assert.Equal(t, http.StatusInternalServerError, rr.Code)
+				hdl.Assert().Equal(http.StatusInternalServerError, rr.Code)
 			}
-			assert.Equal(t, test.expectedResp, strings.TrimSpace(rr.Body.String()))
+			hdl.Assert().Equal(test.expectedResp, strings.TrimSpace(rr.Body.String()))
 		})
 	}
 }
 
-func TestDeleteTask(t *testing.T) {
-	ctrl := gomock.NewController(t)
-	defer ctrl.Finish()
-
-	// creates service mock
-	svcInterface := mock_svc.NewMockSVCInterface(ctrl)
-	hdl.svc = svcInterface
-
+func (hdl *handlerTestSuite) TestDeleteTask() {
 	idTask := "0001"
 
 	// We create a ResponseRecorder (which satisfies http.ResponseWriter) to record the response.
-	handler := http.HandlerFunc(hdl.DeleteTask)
+	handler := http.HandlerFunc(hdl.handler.DeleteTask)
 
 	ctx := context.WithValue(context.Background(), taskIdCtx, idTask)
 
@@ -252,37 +217,29 @@ func TestDeleteTask(t *testing.T) {
 	}
 
 	for index, test := range tests {
-		t.Run(index, func(t *testing.T) {
+		hdl.Run(index, func() {
 			rr := httptest.NewRecorder()
 
 			// Create a request to pass to our handler.
 			req := httptest.NewRequest("DELETE", "/tasks/"+idTask, nil).WithContext(ctx)
 
-			svcInterface.
-				EXPECT().
+			hdl.getService().
 				DeleteTask(idTask).
 				Return(test.svcError)
 
 			handler.ServeHTTP(rr, req)
 			if test.svcError == nil {
-				assert.Equal(t, http.StatusOK, rr.Code)
+				hdl.Assert().Equal(http.StatusOK, rr.Code)
 			} else {
-				assert.Equal(t, http.StatusInternalServerError, rr.Code)
+				hdl.Assert().Equal(http.StatusInternalServerError, rr.Code)
 			}
-			assert.Equal(t, test.expectedResp, strings.TrimSpace(rr.Body.String()))
+			hdl.Assert().Equal(test.expectedResp, strings.TrimSpace(rr.Body.String()))
 		})
 
 	}
 }
 
-func TestListTasks(t *testing.T) {
-	ctrl := gomock.NewController(t)
-	defer ctrl.Finish()
-
-	// creates service mock
-	svcInterface := mock_svc.NewMockSVCInterface(ctrl)
-	hdl.svc = svcInterface
-
+func (hdl *handlerTestSuite) TestListTasks() {
 	tasks := []common.Task{
 		{
 			Id:          "0001",
@@ -299,7 +256,7 @@ func TestListTasks(t *testing.T) {
 	}
 
 	// We create a ResponseRecorder (which satisfies http.ResponseWriter) to record the response.
-	handler := http.HandlerFunc(hdl.ListTasks)
+	handler := http.HandlerFunc(hdl.handler.ListTasks)
 
 	errGetTasks := errors.New("error retrieving tasks")
 	tests := map[string]struct {
@@ -319,24 +276,23 @@ func TestListTasks(t *testing.T) {
 	}
 
 	for index, test := range tests {
-		t.Run(index, func(t *testing.T) {
+		hdl.Run(index, func() {
 			rr := httptest.NewRecorder()
 
 			// Create a request to pass to our handler.
 			req := httptest.NewRequest("GET", "/tasks/", nil)
 
-			svcInterface.
-				EXPECT().
+			hdl.getService().
 				ListTasks().
 				Return(tasks, test.svcError)
 
 			handler.ServeHTTP(rr, req)
 			if test.svcError == nil {
-				assert.Equal(t, http.StatusOK, rr.Code)
+				hdl.Assert().Equal(http.StatusOK, rr.Code)
 			} else {
-				assert.Equal(t, http.StatusInternalServerError, rr.Code)
+				hdl.Assert().Equal(http.StatusInternalServerError, rr.Code)
 			}
-			assert.Equal(t, test.expectedResp, strings.TrimSpace(rr.Body.String()))
+			hdl.Assert().Equal(test.expectedResp, strings.TrimSpace(rr.Body.String()))
 		})
 	}
 }
