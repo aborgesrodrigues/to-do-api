@@ -2,28 +2,11 @@ package service
 
 import (
 	"errors"
-	"testing"
 
 	"github.com/aborgesrodrigues/to-do-api/internal/common"
-	mock_db "github.com/aborgesrodrigues/to-do-api/internal/db/mock"
-	"github.com/golang/mock/gomock"
-	"github.com/stretchr/testify/assert"
 )
 
-func TestAddUser(t *testing.T) {
-	ctrl := gomock.NewController(t)
-	defer ctrl.Finish()
-
-	cfg := Config{
-		Logger: logger,
-	}
-
-	dbInterface := mock_db.NewMockDBInterface(ctrl)
-	svc, err := New(cfg)
-	svc.db = dbInterface
-
-	assert.NoError(t, err)
-
+func (s *svcTestSuite) TestAddUser() {
 	errAddUser := errors.New("error inserting user")
 	user := &common.User{
 		Username: "username1",
@@ -48,37 +31,23 @@ func TestAddUser(t *testing.T) {
 	}
 
 	for index, test := range tests {
-		t.Run(index, func(t *testing.T) {
-			dbInterface.
-				EXPECT().
+		s.Run(index, func() {
+			s.getDB().
 				AddUser(test.user).
 				Return(test.dbError)
 
-			user, err := svc.AddUser(test.user)
-			assert.Equal(t, err, test.expectedErr)
+			user, err := s.svc.AddUser(test.user)
+			s.Assert().Equal(err, test.expectedErr)
 
 			if test.dbError == nil {
-				assert.NotEmpty(t, user.Id)
+				s.Assert().NotEmpty(user.Id)
 			}
 		})
 
 	}
 }
 
-func TestUpdateUser(t *testing.T) {
-	ctrl := gomock.NewController(t)
-	defer ctrl.Finish()
-
-	cfg := Config{
-		Logger: logger,
-	}
-
-	dbInterface := mock_db.NewMockDBInterface(ctrl)
-	svc, err := New(cfg)
-	svc.db = dbInterface
-
-	assert.NoError(t, err)
-
+func (s *svcTestSuite) TestUpdateUser() {
 	errAddUser := errors.New("error inserting user")
 	user := &common.User{
 		Username: "username1",
@@ -103,33 +72,19 @@ func TestUpdateUser(t *testing.T) {
 	}
 
 	for index, test := range tests {
-		t.Run(index, func(t *testing.T) {
-			dbInterface.
-				EXPECT().
+		s.Run(index, func() {
+			s.getDB().
 				UpdateUser(test.user).
 				Return(test.dbError)
 
-			_, err := svc.UpdateUser(test.user)
-			assert.Equal(t, err, test.expectedErr)
+			_, err := s.svc.UpdateUser(test.user)
+			s.Assert().Equal(err, test.expectedErr)
 		})
 
 	}
 }
 
-func TestGetUser(t *testing.T) {
-	ctrl := gomock.NewController(t)
-	defer ctrl.Finish()
-
-	cfg := Config{
-		Logger: logger,
-	}
-
-	dbInterface := mock_db.NewMockDBInterface(ctrl)
-	svc, err := New(cfg)
-	svc.db = dbInterface
-
-	assert.NoError(t, err)
-
+func (s *svcTestSuite) TestGetUser() {
 	errGetUser := errors.New("any error")
 	user := &common.User{
 		Username: "username1",
@@ -158,34 +113,20 @@ func TestGetUser(t *testing.T) {
 	}
 
 	for index, test := range tests {
-		t.Run(index, func(t *testing.T) {
-			dbInterface.
-				EXPECT().
+		s.Run(index, func() {
+			s.getDB().
 				GetUser(test.id).
 				Return(test.dbUser, test.dbError)
 
-			user, err := svc.GetUser(test.id)
-			assert.Equal(t, user, test.expectedResp)
-			assert.Equal(t, err, test.expectedErr)
+			user, err := s.svc.GetUser(test.id)
+			s.Assert().Equal(user, test.expectedResp)
+			s.Assert().Equal(err, test.expectedErr)
 		})
 
 	}
 }
 
-func TestDeleteUser(t *testing.T) {
-	ctrl := gomock.NewController(t)
-	defer ctrl.Finish()
-
-	cfg := Config{
-		Logger: logger,
-	}
-
-	dbInterface := mock_db.NewMockDBInterface(ctrl)
-	svc, err := New(cfg)
-	svc.db = dbInterface
-
-	assert.NoError(t, err)
-
+func (s *svcTestSuite) TestDeleteUser() {
 	errAddUser := errors.New("error inserting user")
 
 	tests := map[string]struct {
@@ -215,39 +156,24 @@ func TestDeleteUser(t *testing.T) {
 	}
 
 	for index, test := range tests {
-		t.Run(index, func(t *testing.T) {
-			dbInterface.
-				EXPECT().
+		s.Run(index, func() {
+			s.getDB().
 				DeleteUserTasks(test.id).
 				Return(test.dbError1)
 
 			if test.dbError1 == nil {
-				dbInterface.
-					EXPECT().
+				s.getDB().
 					DeleteUser(test.id).
 					Return(test.dbError2)
 			}
 
-			err := svc.DeleteUser(test.id)
-			assert.Equal(t, err, test.expectedResp)
+			err := s.svc.DeleteUser(test.id)
+			s.Assert().Equal(err, test.expectedResp)
 		})
 	}
 }
 
-func TestListUsers(t *testing.T) {
-	ctrl := gomock.NewController(t)
-	defer ctrl.Finish()
-
-	cfg := Config{
-		Logger: logger,
-	}
-
-	dbInterface := mock_db.NewMockDBInterface(ctrl)
-	svc, err := New(cfg)
-	svc.db = dbInterface
-
-	assert.NoError(t, err)
-
+func (s *svcTestSuite) TestListUsers() {
 	errGetUsers := errors.New("any error")
 	users := []common.User{
 		{
@@ -281,34 +207,20 @@ func TestListUsers(t *testing.T) {
 	}
 
 	for index, test := range tests {
-		t.Run(index, func(t *testing.T) {
-			dbInterface.
-				EXPECT().
+		s.Run(index, func() {
+			s.getDB().
 				ListUsers().
 				Return(test.dbUsers, test.dbError)
 
-			user, err := svc.ListUsers()
-			assert.Equal(t, user, test.expectedResp)
-			assert.Equal(t, err, test.expectedErr)
+			user, err := s.svc.ListUsers()
+			s.Assert().Equal(user, test.expectedResp)
+			s.Assert().Equal(err, test.expectedErr)
 		})
 
 	}
 }
 
-func TestListUserTasks(t *testing.T) {
-	ctrl := gomock.NewController(t)
-	defer ctrl.Finish()
-
-	cfg := Config{
-		Logger: logger,
-	}
-
-	dbInterface := mock_db.NewMockDBInterface(ctrl)
-	svc, err := New(cfg)
-	svc.db = dbInterface
-
-	assert.NoError(t, err)
-
+func (s *svcTestSuite) TestListUserTasks() {
 	errGetUsers := errors.New("any error")
 	tasks := []common.Task{
 		{
@@ -345,15 +257,14 @@ func TestListUserTasks(t *testing.T) {
 	}
 
 	for index, test := range tests {
-		t.Run(index, func(t *testing.T) {
-			dbInterface.
-				EXPECT().
+		s.Run(index, func() {
+			s.getDB().
 				ListUserTasks(test.id).
 				Return(test.dbTasks, test.dbError)
 
-			users, err := svc.ListUserTasks(test.id)
-			assert.Equal(t, users, test.expectedResp)
-			assert.Equal(t, err, test.expectedErr)
+			users, err := s.svc.ListUserTasks(test.id)
+			s.Assert().Equal(users, test.expectedResp)
+			s.Assert().Equal(err, test.expectedErr)
 		})
 
 	}
