@@ -9,10 +9,21 @@ services:
       - 8080:8080
     environment:
       CONN_STRING: postgres://postgres:example@db:5432/todo?sslmode=disable
+      AUDITLOG_S3_BUCKET: "wcf-audit-local"
+      AUDITLOG_S3_DIRECTORY: "todo-api/"
+      AUDITLOG_S3_ENDPOINT: "http://localstack:4566"
+      AUDITLOG_S3_REGION: "us-east-1"
+      ELASTICSEARCH_ENDPOINT: "http://elasticsearch:9200"
+      ELASTICSEARCH_INDEX: "todo-api"
+      ELASTICSEARCH_USERNAME: "elastic"
+      ELASTICSEARCH_PASSWORD: "changeme"
     volumes:
       - .:/build/
     depends_on:
       - db
+      - elasticsearch
+      - kibana
+      - localstack
   db:
     image: postgres
     restart: always
@@ -28,3 +39,27 @@ services:
       retries: 10
     volumes:
       - ./data:/var/lib/postgresql/data
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.5.2
+    ports:
+      - 9200:9200
+      - 9300:9300
+    environment:
+      discovery.type: single-node
+  kibana:
+    image: docker.elastic.co/kibana/kibana:8.5.2
+    ports:
+      - 5601:5601
+    environment:
+      ELASTICSEARCH_HOSTS: http://elasticsearch:9200
+      ELASTICSEARCH_URL: http://elasticsearch:9200
+    depends_on:
+      - elasticsearch
+  localstack:
+    image: localstack/localstack
+    environment:
+      SERVICES: s3
+    ports:
+      - "4566:4566"
+    volumes:
+      - ./dev/localstack:/docker-entrypoint-initaws.d

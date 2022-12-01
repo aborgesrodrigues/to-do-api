@@ -12,7 +12,7 @@ run:
 
 .PHONY: support
 support:
-	docker-compose up db
+	docker-compose up db elasticsearch kibana localstack
 
 .PHONY: complete_test
 complete_test:

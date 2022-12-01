@@ -41,6 +41,7 @@ func (handler *Handler) IdMiddleware(next http.Handler) http.Handler {
 	})
 }
 
+// LoggerMiddleware will log request and response for each call
 func (handler *Handler) LoggerMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(rw http.ResponseWriter, r *http.Request) {
 		// copy request body

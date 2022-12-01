@@ -4,15 +4,15 @@ import (
 	"net/http"
 
 	"github.com/aborgesrodrigues/to-do-api/cmd/handlers"
+	"github.com/aborgesrodrigues/to-do-api/internal/elastic"
 	"github.com/go-chi/chi/v5"
+	"github.com/spf13/viper"
 	"go.uber.org/zap"
+	"go.uber.org/zap/zapcore"
 )
 
 func main() {
-	logger, err := zap.NewDevelopment()
-	if err != nil {
-		panic("Error creating logger")
-	}
+	logger := getLogger()
 
 	hdl := handlers.New(logger)
 
@@ -53,4 +53,54 @@ func getRouter(svc *handlers.Handler) *chi.Mux {
 	})
 
 	return r
+}
+
+func getLogger() *zap.Logger {
+	zapConfig := zap.NewProductionConfig()
+
+	const endpointKey = "ELASTICSEARCH_ENDPOINT"
+	endpoint := viper.GetString(endpointKey)
+
+	const indexKey = "ELASTICSEARCH_INDEX"
+	index := viper.GetString(indexKey)
+
+	const usernameKey = "ELASTICSEARCH_USERNAME"
+	username := viper.GetString(usernameKey)
+
+	const passwordKey = "ELASTICSEARCH_PASSWORD"
+	password := viper.GetString(passwordKey)
+
+	elasticConfig := elastic.Config{
+		Level:    &zapConfig.Level,
+		Endpoint: endpoint,
+		Username: &username,
+		Password: &password,
+		Index:    index,
+	}
+
+	elasticCore, err := elasticConfig.NewCore()
+	if err != nil {
+		panic(err)
+	}
+
+	logger, err := zapConfig.Build(
+		zap.WrapCore(func(c zapcore.Core) zapcore.Core {
+			return zapcore.NewTee(c, elasticCore)
+		}),
+		zap.Fields(zap.String("application", "to-do")),
+	)
+	if err != nil {
+		panic(err)
+	}
+
+	zap.RedirectStdLog(logger)
+
+	// Not logging elastic password, obviously.
+	logger.Info("Logger configuration.",
+		zap.String(endpointKey, endpoint),
+		zap.String(indexKey, index),
+		zap.String(usernameKey, username),
+	)
+
+	return logger
 }
