@@ -3,9 +3,11 @@ package handlers
 import (
 	"bytes"
 	"context"
+	"encoding/json"
 	"io"
 	"io/ioutil"
 	"net/http"
+	"time"
 
 	"github.com/go-chi/chi/middleware"
 	"github.com/go-chi/chi/v5"
@@ -21,6 +23,7 @@ const (
 
 func (handler *Handler) IdMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(rw http.ResponseWriter, r *http.Request) {
+		handler.logger.Info("IdMiddleware")
 		userId := chi.URLParam(r, string(userIdCtx))
 		if userId != "" {
 			r = r.WithContext(context.WithValue(r.Context(), userIdCtx, userId))
@@ -44,6 +47,16 @@ func (handler *Handler) IdMiddleware(next http.Handler) http.Handler {
 // LoggerMiddleware will log request and response for each call
 func (handler *Handler) LoggerMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(rw http.ResponseWriter, r *http.Request) {
+		logger := handler.logger.With(
+			zap.String("from", r.RemoteAddr),
+			zap.String("protocol", r.Proto),
+			zap.String("method", r.Method),
+			zap.String("path", r.URL.Path),
+		)
+		start := time.Now()
+		logger.Info("Inbound HTTP request: received",
+			zap.Int64("contentLength", r.ContentLength),
+		)
 		// copy request body
 		var reqBuf bytes.Buffer
 		tee := io.TeeReader(r.Body, &reqBuf)
@@ -65,8 +78,18 @@ func (handler *Handler) LoggerMiddleware(next http.Handler) http.Handler {
 			// write 'null' as the body representation when in fact there was none.
 			clone.Body = nil
 		}
+		logger.Info("Inbound HTTP request: completed",
+			zap.Int("statusCode", ww.Status()),
+			zap.String("statusText", http.StatusText(ww.Status())),
+			zap.Duration("responseTime", time.Since(start).Round(time.Millisecond)),
+			zap.Int("bytesWritten", ww.BytesWritten()),
+		)
 
-		handler.logger.Info("request", zap.Any("data", getRequestMetadata(clone)))
+		bReq, err := json.Marshal(getRequestMetadata(clone))
+		if err != nil {
+			logger.Error("error marshaling request", zap.Error(err))
+		}
+		logger.Info("request", zap.ByteString("data", bReq))
 
 		// log response
 		respCopy := &http.Response{
@@ -80,6 +103,10 @@ func (handler *Handler) LoggerMiddleware(next http.Handler) http.Handler {
 			StatusCode:    ww.Status(),
 		}
 
-		handler.logger.Info("response", zap.Any("data", getResponseMetadata(respCopy)))
+		bRes, err := json.Marshal(getResponseMetadata(respCopy))
+		if err != nil {
+			logger.Error("error marshaling request", zap.Error(err))
+		}
+		logger.Info("response", zap.ByteString("data", bRes))
 	})
 }

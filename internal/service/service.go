@@ -16,6 +16,7 @@ func New(cfg Config) (*Service, error) {
 		logger.Error("Error getting database instance", zap.Error(err))
 		return nil, err
 	}
+	logger.Info("service created")
 
 	return &Service{
 		logger: logger,

@@ -7,7 +7,7 @@ COPY go.mod go.sum /
 RUN go mod download
 
 COPY . .
-RUN go build -ldflags '-linkmode=external' -o server ./...
+RUN CGO_ENABLED=0 GOOS=linux go build -ldflags '-linkmode=external' -o server cmd/main.go
 
 # Must match the alpine version used in the builder stage for Dynatrace
 # to instrument correctly.

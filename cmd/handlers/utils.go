@@ -15,7 +15,7 @@ func New(logger *zap.Logger) *Handler {
 	if err != nil {
 		panic(err)
 	}
-
+	logger.Info("handler created")
 	return &Handler{
 		logger: logger,
 		svc:    svc,
