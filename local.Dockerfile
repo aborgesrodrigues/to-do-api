@@ -14,4 +14,4 @@ ENV GOOS=linux
 COPY . .
 
 EXPOSE 8080
-ENTRYPOINT CompileDaemon --build="go build cmd/main.go" --command=./main
+ENTRYPOINT CompileDaemon --build="go build -ldflags '-linkmode=external' cmd/main.go" --command=./main -log-prefix=false
