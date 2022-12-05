@@ -11,3 +11,11 @@ type Handler struct {
 	AuditLogger *logging.HTTPAuditLogger
 	svc         service.SVCInterface
 }
+
+// AccessLoggerOptions holds options for constructing the AccessLogger middleware.
+type AccessLoggerOptions struct {
+	HTTPAuditLogger *logging.HTTPAuditLogger
+	// Logger to use in any case where a logger cannot be resolved automatically from
+	// request context.
+	DefaultLogger *zap.Logger
+}

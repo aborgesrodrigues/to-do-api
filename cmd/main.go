@@ -60,8 +60,8 @@ func getRouter(svc *handlers.Handler) *chi.Mux {
 	r := chi.NewRouter()
 
 	r.Group(func(r chi.Router) {
-		r.Use(logging.RequestCorrelationLogger(svc.Logger))
-		r.Use(logging.AccessLogger(logging.AccessLoggerOptions{
+		r.Use(logging.RequestLogger(svc.Logger))
+		r.Use(handlers.AccessLogger(handlers.AccessLoggerOptions{
 			HTTPAuditLogger: svc.AuditLogger,
 		}))
 

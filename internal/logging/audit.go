@@ -8,7 +8,6 @@ import (
 	"sync"
 	"time"
 
-	"github.com/aws/aws-lambda-go/events"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 
@@ -17,8 +16,8 @@ import (
 
 // HTTPAuditLogger facilitates logging HTTP requests and responses
 type HTTPAuditLogger struct {
-	opt      HTTPAuditLogOptions
-	logger   *audit.Logger
+	Opt      HTTPAuditLogOptions
+	Logger   *audit.Logger
 	wg       *sync.WaitGroup
 	once     sync.Once
 	isClosed bool
@@ -31,7 +30,7 @@ func (l *HTTPAuditLogger) Close() {
 	l.once.Do(func() {
 		l.isClosed = true
 		waitTimeout(l.wg, 2*time.Second)
-		l.logger.Close()
+		l.Logger.Close()
 	})
 }
 
@@ -71,8 +70,8 @@ func NewHTTPAuditLogger(opt HTTPAuditLogOptions) (*HTTPAuditLogger, error) {
 	})
 
 	return &HTTPAuditLogger{
-		logger: al,
-		opt:    opt,
+		Logger: al,
+		Opt:    opt,
 		wg:     &sync.WaitGroup{},
 	}, nil
 }
@@ -83,7 +82,7 @@ func (l *HTTPAuditLogger) normalizePath(path string) string {
 		return strings.Split(strings.Trim(p, "/"), "/")
 	}
 PathLoop:
-	for _, p := range l.opt.AuditPathParams {
+	for _, p := range l.Opt.AuditPathParams {
 		known := split(p)
 		unknown := split(path)
 		if len(known) != len(unknown) {
@@ -130,10 +129,6 @@ func (l *HTTPAuditLogger) makeRequestID(req *http.Request, downstream bool) stri
 
 func (l *HTTPAuditLogger) makeResponseID(resp *http.Response, downstream bool) string {
 	return l.makeAuditID(resp.Request, downstream, true)
-}
-
-func (l *HTTPAuditLogger) makeGatewayResponseID(req *http.Request, downstream bool) string {
-	return l.makeAuditID(req, downstream, true)
 }
 
 func getRequestMetadata(ctx context.Context, req *http.Request) []audit.Metadata {
@@ -183,159 +178,48 @@ func getResponseMetadata(ctx context.Context, res *http.Response) []audit.Metada
 	return m
 }
 
-func getGatewayResponseMetadata(ctx context.Context, req *http.Request,
-	gatewayResponse *events.APIGatewayProxyResponse) []audit.Metadata {
-	var m []audit.Metadata
-	m = append(m,
-		audit.Metadata{Name: "protocol", Value: req.Proto},
-		audit.Metadata{Name: "requestHost", Value: req.Host},
-		audit.Metadata{Name: "requestHostname", Value: req.URL.Hostname()},
-		audit.Metadata{Name: "requestMethod", Value: req.Method},
-		audit.Metadata{Name: "requestPath", Value: req.URL.Path},
-		audit.Metadata{Name: "requestProtocol", Value: req.Proto},
-		audit.Metadata{Name: "statusCode", Value: gatewayResponse.StatusCode},
-		audit.Metadata{Name: "headers", Value: gatewayResponse.Headers},
-	)
-	if len(gatewayResponse.Body) != 0 {
-		m = append(m, audit.Metadata{Name: "body", Value: gatewayResponse.Body})
-	}
-
-	return m
-}
-
-// LogLambdaGatewayUpstreamResponse - call method wrapped with executeAsync if you want async execution
-// write audit log for a response to upstream
-// resp should be safe for mutation
-func (l *HTTPAuditLogger) logLambdaGatewayUpstreamResponse(
-	ctx context.Context,
-	logger *zap.Logger,
-	req *http.Request,
-	gatewayResp *events.APIGatewayProxyResponse,
-) {
-	if l.logger == nil {
-		logger.Error("Unable to write upstream response audit log. Audit logger not provided.")
-		return
-	}
-
-	if err := redactAPIGatewayResponse(logger, gatewayResp, l.opt.RedactionOptions); err != nil {
-		logger.Error("Unable to redact upstream response. Audit log will not be written.", zap.Error(err))
-		// preferring to lose the audit log than to potentially log PCI, etc.
-		return
-	}
-
-	if err := redactRequest(logger, req, l.opt.RedactionOptions); err != nil {
-		logger.Error("Unable to redact upstream request. Audit log will not be written.", zap.Error(err))
-		// preferring to lose the audit log than to potentially log PCI, etc.
-		return
-	}
-
-	id := l.makeGatewayResponseID(req, false)
-	metadata := getGatewayResponseMetadata(ctx, req, gatewayResp)
-	l.logger.Write(ctx, id, metadata...)
-}
-
 // call method wrapped with executeAsync if you want async execution
 // write audit log for a request from upstream
 // req should be safe for mutation
-func (l *HTTPAuditLogger) logUpstreamRequest(
+func (l *HTTPAuditLogger) LogUpstreamRequest(
 	ctx context.Context,
 	logger *zap.Logger,
 	req *http.Request,
 ) {
-	if l.logger == nil {
+	if l.Logger == nil {
 		logger.Error("Unable to write upstream request audit log. Audit logger not provided.")
 		return
 	}
-	if err := redactRequest(logger, req, l.opt.RedactionOptions); err != nil {
+	if err := redactRequest(logger, req, l.Opt.RedactionOptions); err != nil {
 		logger.Error("Unable to redact upstream request. Audit log will not be written.", zap.Error(err))
 		// preferring to lose the audit log than to potentially log PCI, etc.
 		return
 	}
 	id := l.makeRequestID(req, false)
 	metadata := getRequestMetadata(ctx, req)
-	l.logger.Write(ctx, id, metadata...)
+	l.Logger.Write(ctx, id, metadata...)
 }
 
 // call method wrapped with executeAsync if you want async execution
 // write audit log for a response to upstream
 // resp should be safe for mutation
-func (l *HTTPAuditLogger) logUpstreamResponse(
+func (l *HTTPAuditLogger) LogUpstreamResponse(
 	ctx context.Context,
 	logger *zap.Logger,
 	resp *http.Response,
 ) {
-	if l.logger == nil {
+	if l.Logger == nil {
 		logger.Error("Unable to write upstream response audit log. Audit logger not provided.")
 		return
 	}
-	if err := redactResponse(logger, resp, l.opt.RedactionOptions); err != nil {
+	if err := redactResponse(logger, resp, l.Opt.RedactionOptions); err != nil {
 		logger.Error("Unable to redact upstream response. Audit log will not be written.", zap.Error(err))
 		// preferring to lose the audit log than to potentially log PCI, etc.
 		return
 	}
 	id := l.makeResponseID(resp, false)
 	metadata := getResponseMetadata(ctx, resp)
-	l.logger.Write(ctx, id, metadata...)
-}
-
-// call method wrapped with executeAsync if you want async execution
-// write audit log for a request to downstream
-// req should be safe for mutation
-func (l *HTTPAuditLogger) logDownstreamRequest(
-	ctx context.Context,
-	logger *zap.Logger,
-	req *http.Request,
-) {
-	if l.logger == nil {
-		logger.Error("Unable to write downstream request audit log. Audit logger not provided.")
-		return
-	}
-	if err := redactRequest(logger, req, l.opt.RedactionOptions); err != nil {
-		logger.Error("Unable to redact downstream request. Audit log will not be written.", zap.Error(err))
-		// preferring to lose the audit log than to potentially log PCI, etc.
-		return
-	}
-	id := l.makeRequestID(req, true)
-	metadata := getRequestMetadata(ctx, req)
-	l.logger.Write(ctx, id, metadata...)
-}
-
-// call method wrapped with executeAsync if you want async execution
-// write audit log for a response from downstream
-// resp should be safe for mutation
-func (l *HTTPAuditLogger) logDownstreamResponse(
-	ctx context.Context,
-	logger *zap.Logger,
-	resp *http.Response,
-) {
-	if l.logger == nil {
-		logger.Error("Unable to write downstream response audit log. Audit logger not provided.")
-		return
-	}
-	if err := redactResponse(logger, resp, l.opt.RedactionOptions); err != nil {
-		logger.Error("Unable to redact downstream response. Audit log will not be written.", zap.Error(err))
-		// preferring to lose the audit log than to potentially log PCI, etc.
-		return
-	}
-	// resp.Request would normally only be populated on *client* requests, but we're cobbling this
-	// *http.Response together ourselves just to write the audit log.
-	id := l.makeResponseID(resp, true)
-	metadata := getResponseMetadata(ctx, resp)
-	l.logger.Write(ctx, id, metadata...)
-}
-
-// executeAsync is used as a wrapper around calls that we want to be executed in a go routine. The call itself should
-// be made synchronously, and will in turn execute the function in a go routine. The benefits of it are that it registers
-// the call in a wait group on the instance so that the close method can better handle graceful exits
-func (l *HTTPAuditLogger) executeAsync(f func()) {
-	if l.isClosed {
-		return
-	}
-	l.wg.Add(1)
-	go func(f func()) {
-		f()
-		l.wg.Done()
-	}(f)
+	l.Logger.Write(ctx, id, metadata...)
 }
 
 // waitTimeout waits for either a duration to elapse or a wait group to be done before returning, whichever happens first

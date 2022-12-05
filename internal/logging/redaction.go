@@ -8,7 +8,6 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/aws/aws-lambda-go/events"
 	"github.com/clbanning/mxj/v2"
 	"go.uber.org/zap"
 )
@@ -71,56 +70,6 @@ func redactResponse(logger *zap.Logger, r *http.Response, ro RedactionOptions) e
 	r.Header = redactHeaders(ro, &r.Header)
 
 	return nil
-}
-
-// this function is used for AWS lambda gateway responses
-func redactAPIGatewayResponse(logger *zap.Logger, r *events.APIGatewayProxyResponse, ro RedactionOptions) error {
-	if len(ro.RedactBodyKeys) == 0 && len(ro.RedactHeaders) == 0 {
-		return nil
-	}
-	if r == nil {
-		logger.Warn("response was nil")
-		return nil
-	}
-
-	i, redactedBody, err := redactBody(logger, ro, strings.NewReader(r.Body))
-	if err != nil {
-		return err
-	}
-	if i > 0 {
-		rBytes, err := io.ReadAll(redactedBody)
-		if err != nil {
-			logger.Error("Error converting redacted body")
-		}
-		r.Body = string(rBytes)
-	} else {
-		// HTTPClient guarantees that response body is non-nil, which causes httputil.DumpResponse
-		// to write 'null' as the response body representation even if none was present.
-		r.Body = ""
-	}
-
-	r.Headers = redactAPIGatewayHeaders(ro, r.Headers)
-
-	return nil
-}
-
-// returns a redacted copy of headers in an API Gateway proxy response used for AWS lambdas
-func redactAPIGatewayHeaders(ro RedactionOptions, headers map[string]string) map[string]string {
-	headersClone := make(map[string]string)
-
-	for _, redactedHeader := range ro.RedactHeaders {
-		if _, ok := headers[redactedHeader]; ok {
-			headersClone[redactedHeader] = redacted
-		}
-	}
-
-	for headerKey, headerVal := range headers {
-		if _, ok := headersClone[headerKey]; !ok {
-			headersClone[headerKey] = headerVal
-		}
-	}
-
-	return headersClone
 }
 
 // returns a redacted copy of headers

@@ -12,7 +12,7 @@ type contextKey string
 
 const ctxKeyLogger = contextKey("request-logger")
 
-func RequestCorrelationLogger(baseLogger *zap.Logger) func(next http.Handler) http.Handler {
+func RequestLogger(baseLogger *zap.Logger) func(next http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(res http.ResponseWriter, req *http.Request) {
 			logger := baseLogger
