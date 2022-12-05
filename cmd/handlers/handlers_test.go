@@ -3,10 +3,13 @@ package handlers
 import (
 	"testing"
 
+	"github.com/aborgesrodrigues/to-do-api/internal/audit"
+	"github.com/aborgesrodrigues/to-do-api/internal/logging"
 	mock_service "github.com/aborgesrodrigues/to-do-api/internal/service/mock"
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/suite"
 	"go.uber.org/zap"
+	"go.uber.org/zap/zaptest"
 )
 
 type handlerTestSuite struct {
@@ -17,8 +20,15 @@ type handlerTestSuite struct {
 
 func (hdl *handlerTestSuite) SetupSuite() {
 	logger := zap.NewNop()
+	auditWriter := audit.NewZapWriter(zaptest.NewLogger(hdl.T()))
+	auditLogger, err := logging.NewHTTPAuditLogger(logging.HTTPAuditLogOptions{
+		Writer: auditWriter,
+	})
+	hdl.Assert().NoError(err)
 
-	hdl.handler = New(logger)
+	defer auditLogger.Close()
+
+	hdl.handler = New(logger, auditLogger)
 }
 
 func (hdl *handlerTestSuite) SetupTest() {

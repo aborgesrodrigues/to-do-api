@@ -10,9 +10,12 @@ import (
 	"testing"
 
 	"github.com/aborgesrodrigues/to-do-api/cmd/handlers"
+	"github.com/aborgesrodrigues/to-do-api/internal/audit"
+	"github.com/aborgesrodrigues/to-do-api/internal/logging"
 	"github.com/spf13/viper"
 	"github.com/stretchr/testify/suite"
 	"go.uber.org/zap"
+	"go.uber.org/zap/zaptest"
 )
 
 type testSuite struct {
@@ -33,8 +36,15 @@ func (s *testSuite) SetupSuite() {
 	if err != nil {
 		panic("Error creating logger")
 	}
+	auditWriter := audit.NewZapWriter(zaptest.NewLogger(s.T()))
+	auditLogger, err := logging.NewHTTPAuditLogger(logging.HTTPAuditLogOptions{
+		Writer: auditWriter,
+	})
+	s.Assert().NoError(err)
 
-	hdl := handlers.New(logger)
+	defer auditLogger.Close()
+
+	hdl := handlers.New(logger, auditLogger)
 	s.handler = hdl
 
 	logger.Info("Server listening.", zap.String("addr", "8080"))

@@ -9,8 +9,6 @@ func getRouter(svc *handlers.Handler) *chi.Mux {
 	r := chi.NewRouter()
 
 	r.Group(func(r chi.Router) {
-		r.Use(svc.LoggerMiddleware)
-
 		r.Route("/users", func(r chi.Router) {
 			r.Get("/", svc.ListUsers)
 			r.Post("/", svc.AddUser)

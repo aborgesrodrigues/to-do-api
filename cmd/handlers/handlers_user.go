@@ -11,14 +11,14 @@ import (
 func (handler *Handler) AddUser(w http.ResponseWriter, r *http.Request) {
 	request := &common.User{}
 	if err := json.NewDecoder(r.Body).Decode(request); err != nil {
-		handler.logger.Error("Unable to decode request body.", zap.Error(err))
+		handler.Logger.Error("Unable to decode request body.", zap.Error(err))
 		writeResponse(w, http.StatusInternalServerError, err.Error())
 		return
 	}
 
 	user, err := handler.svc.AddUser(request)
 	if err != nil {
-		handler.logger.Error("Unable add user.", zap.Error(err))
+		handler.Logger.Error("Unable add user.", zap.Error(err))
 		writeResponse(w, http.StatusInternalServerError, err.Error())
 		return
 	}
@@ -29,7 +29,7 @@ func (handler *Handler) AddUser(w http.ResponseWriter, r *http.Request) {
 func (handler *Handler) UpdateUser(w http.ResponseWriter, r *http.Request) {
 	request := &common.User{}
 	if err := json.NewDecoder(r.Body).Decode(request); err != nil {
-		handler.logger.Error("Unable to decode request body.", zap.Error(err))
+		handler.Logger.Error("Unable to decode request body.", zap.Error(err))
 		writeResponse(w, http.StatusInternalServerError, err.Error())
 		return
 	}
@@ -38,7 +38,7 @@ func (handler *Handler) UpdateUser(w http.ResponseWriter, r *http.Request) {
 
 	user, err := handler.svc.UpdateUser(request)
 	if err != nil {
-		handler.logger.Error("Unable update user.", zap.Error(err))
+		handler.Logger.Error("Unable update user.", zap.Error(err))
 		writeResponse(w, http.StatusInternalServerError, err.Error())
 		return
 	}
@@ -51,7 +51,7 @@ func (handler *Handler) GetUser(w http.ResponseWriter, r *http.Request) {
 
 	user, err := handler.svc.GetUser(id)
 	if err != nil {
-		handler.logger.Error("Unable to retrieve users.", zap.Error(err))
+		handler.Logger.Error("Unable to retrieve users.", zap.Error(err))
 		writeResponse(w, http.StatusInternalServerError, err.Error())
 		return
 	}
@@ -64,7 +64,7 @@ func (handler *Handler) DeleteUser(w http.ResponseWriter, r *http.Request) {
 
 	// delete user
 	if err := handler.svc.DeleteUser(id); err != nil {
-		handler.logger.Error("Unable to delete users.", zap.Error(err))
+		handler.Logger.Error("Unable to delete users.", zap.Error(err))
 		writeResponse(w, http.StatusInternalServerError, err.Error())
 		return
 	}
@@ -77,7 +77,7 @@ func (handler *Handler) DeleteUser(w http.ResponseWriter, r *http.Request) {
 func (handler *Handler) ListUsers(w http.ResponseWriter, r *http.Request) {
 	users, err := handler.svc.ListUsers()
 	if err != nil {
-		handler.logger.Error("Unable to retrieve users.", zap.Error(err))
+		handler.Logger.Error("Unable to retrieve users.", zap.Error(err))
 		writeResponse(w, http.StatusInternalServerError, err.Error())
 		return
 	}
@@ -90,7 +90,7 @@ func (handler *Handler) ListUserTasks(w http.ResponseWriter, r *http.Request) {
 
 	users, err := handler.svc.ListUserTasks(id)
 	if err != nil {
-		handler.logger.Error("Unable to retrieve user tasks.", zap.Error(err))
+		handler.Logger.Error("Unable to retrieve user tasks.", zap.Error(err))
 		writeResponse(w, http.StatusInternalServerError, err.Error())
 		return
 	}

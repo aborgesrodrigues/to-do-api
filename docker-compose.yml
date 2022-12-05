@@ -9,10 +9,13 @@ services:
       - 8080:8080
     environment:
       CONN_STRING: postgres://postgres:example@db:5432/todo?sslmode=disable
-      # AUDITLOG_S3_BUCKET: "wcf-audit-local"
-      # AUDITLOG_S3_DIRECTORY: "todo-api/"
-      # AUDITLOG_S3_ENDPOINT: "http://localstack:4566"
-      # AUDITLOG_S3_REGION: "us-east-1"
+      AUDITLOG_S3_BUCKET: "wcf-audit-local"
+      AUDITLOG_S3_DIRECTORY: "todo-api/"
+      AUDITLOG_S3_ENDPOINT: "http://localstack:4566"
+      AUDITLOG_S3_REGION: "us-east-1"
+      AWS_ACCESS_KEY_ID: "test"
+      AWS_SECRET_ACCESS_KEY: "test"
+      AWS_SESSION_TOKEN: "test"
     labels:
         co.elastic.logs/enabled: true
         co.elastic.logs/json.keys_under_root: true
@@ -29,8 +32,8 @@ services:
         condition: service_healthy
       kibana:
         condition: service_healthy
-      # localstack:
-      #   condition: service_healthy
+      localstack:
+        condition: service_healthy
   db:
     image: postgres
     restart: always
@@ -79,11 +82,11 @@ services:
       retries: 80
     ports:
       - 5601:5601
-  # localstack:
-  #   image: localstack/localstack
-  #   environment:
-  #     SERVICES: s3
-  #   ports:
-  #     - "4566:4566"
-  #   volumes:
-  #     - ./dev/localstack:/docker-entrypoint-initaws.d
+  localstack:
+    image: localstack/localstack
+    environment:
+      SERVICES: s3
+    ports:
+      - "4566:4566"
+    volumes:
+      - ./dev/localstack:/docker-entrypoint-initaws.d

@@ -6,19 +6,21 @@ import (
 	"net/http"
 
 	"github.com/aborgesrodrigues/to-do-api/internal/common"
+	"github.com/aborgesrodrigues/to-do-api/internal/logging"
 	"github.com/aborgesrodrigues/to-do-api/internal/service"
 	"go.uber.org/zap"
 )
 
-func New(logger *zap.Logger) *Handler {
+func New(logger *zap.Logger, auditLogger *logging.HTTPAuditLogger) *Handler {
 	svc, err := service.New(service.Config{Logger: logger})
 	if err != nil {
 		panic(err)
 	}
 	logger.Info("handler created")
 	return &Handler{
-		logger: logger,
-		svc:    svc,
+		Logger:      logger,
+		AuditLogger: auditLogger,
+		svc:         svc,
 	}
 }
 
