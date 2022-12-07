@@ -39,7 +39,6 @@ type HTTPAuditLogOptions struct {
 	AuditPathParams          []string
 	DisableRequestAuditLogs  bool
 	DisableResponseAuditLogs bool
-	RedactionOptions         RedactionOptions
 
 	audit.Config
 	Writer audit.EventWriter
@@ -190,11 +189,7 @@ func (l *HTTPAuditLogger) LogUpstreamRequest(
 		logger.Error("Unable to write upstream request audit log. Audit logger not provided.")
 		return
 	}
-	if err := redactRequest(logger, req, l.Opt.RedactionOptions); err != nil {
-		logger.Error("Unable to redact upstream request. Audit log will not be written.", zap.Error(err))
-		// preferring to lose the audit log than to potentially log PCI, etc.
-		return
-	}
+
 	id := l.makeRequestID(req, false)
 	metadata := getRequestMetadata(ctx, req)
 	l.Logger.Write(ctx, id, metadata...)
@@ -212,11 +207,7 @@ func (l *HTTPAuditLogger) LogUpstreamResponse(
 		logger.Error("Unable to write upstream response audit log. Audit logger not provided.")
 		return
 	}
-	if err := redactResponse(logger, resp, l.Opt.RedactionOptions); err != nil {
-		logger.Error("Unable to redact upstream response. Audit log will not be written.", zap.Error(err))
-		// preferring to lose the audit log than to potentially log PCI, etc.
-		return
-	}
+
 	id := l.makeResponseID(resp, false)
 	metadata := getResponseMetadata(ctx, resp)
 	l.Logger.Write(ctx, id, metadata...)

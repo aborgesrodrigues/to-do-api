@@ -4,7 +4,7 @@ services:
   app:
     build:
       context: .
-      dockerfile: local.Dockerfile
+      dockerfile: ./dev/docker/local.Dockerfile
     ports:
       - 8080:8080
     environment:
@@ -55,7 +55,7 @@ services:
     image: docker.elastic.co/beats/filebeat:7.14.0
     command: filebeat -e -strict.perms=false
     volumes:
-      - ./filebeat.docker.yml:/usr/share/filebeat/filebeat.yml
+      - ./dev/filebeat/filebeat.docker.yml:/usr/share/filebeat/filebeat.yml
       - /var/lib/docker/containers:/var/lib/docker/containers:ro
       - /var/run/docker.sock:/var/run/docker.sock:ro
   elasticsearch:

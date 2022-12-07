@@ -1,6 +1,7 @@
 package audit
 
 import (
+	"context"
 	"strconv"
 	"strings"
 	"testing"
@@ -26,4 +27,22 @@ func TestDirectoryCreation(t *testing.T) {
 	if !strings.Contains(actual, strconv.Itoa(now.Hour())) {
 		t.Errorf("Expected Hour: %d in directory: %s", now.Hour(), actual)
 	}
+}
+
+func ExampleNewS3Writer() {
+	s3Writer, err := NewS3Writer(S3Config{
+		// nil or omitted to write to AWS S3. Might set "http://localhost:4566",
+		// for example, to write to localstack for local development purposes.
+		Endpoint:  nil,
+		Region:    "us-east-1",
+		Bucket:    "my-audit-logs",
+		Directory: "my-service-name",
+	})
+	if err != nil {
+		panic(err)
+	}
+	logger, err := NewLogger(Config{}, s3Writer)
+	defer logger.Close()
+
+	logger.Write(context.Background(), "test", Metadata{Name: "foo", Value: "bar"})
 }
