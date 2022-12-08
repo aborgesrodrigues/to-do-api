@@ -2,7 +2,6 @@ package main
 
 import (
 	"net/http"
-	"os"
 
 	"github.com/aborgesrodrigues/to-do-api/cmd/handlers"
 	"github.com/aborgesrodrigues/to-do-api/internal/audit"
@@ -10,7 +9,6 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/spf13/viper"
 
-	"go.elastic.co/ecszap"
 	"go.uber.org/zap"
 )
 
@@ -93,10 +91,10 @@ func getRouter(svc *handlers.Handler) *chi.Mux {
 }
 
 func getLogger() *zap.Logger {
-	encoderConfig := ecszap.NewDefaultEncoderConfig()
-	core := ecszap.NewCore(encoderConfig, os.Stdout, zap.DebugLevel)
-	logger := zap.New(core, zap.AddCaller())
-	logger = logger.With(zap.String("app", "myapp")).With(zap.String("environment", "psm"))
+	logger, err := zap.NewProduction()
+	if err != nil {
+		panic(err)
+	}
 
 	return logger
 }

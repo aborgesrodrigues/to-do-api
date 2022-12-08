@@ -15,7 +15,7 @@ FROM alpine:3.16
 WORKDIR /usr/local/bin/
 EXPOSE 8080
 RUN apk add --no-cache ca-certificates libc6-compat
-# HEALTHCHECK CMD wget -q -S -O - http://localhost/healthcheck
+
 COPY --from=builder /build/server .
 # Prefer ENTRYPOINT over CMD and exec form over shell form for reasons documented at:
 # https://docs.docker.com/engine/reference/builder/#entrypoint
