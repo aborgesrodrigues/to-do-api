@@ -67,14 +67,14 @@ func (s *testSuite) TearDownTest() {
 
 }
 
-func (s *testSuite) call(method, path string, payload, response interface{}) {
+func (s *testSuite) call(method, path string, payload, response interface{}) *http.Response {
 	var buf bytes.Buffer
 	if payload != nil {
 		err := json.NewEncoder(&buf).Encode(payload)
 		s.Assert().NoError(err)
 	}
 
-	req, err := http.NewRequest(method, path, nil)
+	req, err := http.NewRequest(method, path, bytes.NewReader(buf.Bytes()))
 	s.Assert().NoError(err)
 
 	res, err := http.DefaultClient.Do(req)
@@ -84,4 +84,6 @@ func (s *testSuite) call(method, path string, payload, response interface{}) {
 		err = json.NewDecoder(res.Body).Decode(&response)
 		s.Assert().NoError(err)
 	}
+
+	return res
 }

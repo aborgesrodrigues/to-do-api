@@ -4,9 +4,6 @@
 package integrationtest
 
 import (
-	"bytes"
-	"encoding/json"
-	"io/ioutil"
 	"net/http"
 
 	"github.com/aborgesrodrigues/to-do-api/internal/common"
@@ -15,28 +12,14 @@ import (
 
 func (s *testSuite) listUsers() []common.User {
 	users := make([]common.User, 0)
-	req, err := http.NewRequest("GET", "http://localhost:8080/users", nil)
-	s.Assert().NoError(err)
-
-	res, err := http.DefaultClient.Do(req)
-	s.Assert().NoError(err)
-
-	err = json.NewDecoder(res.Body).Decode(&users)
-	s.Assert().NoError(err)
+	s.call("GET", "http://localhost:8080/users", nil, &users)
 
 	return users
 }
 
 func (s *testSuite) getUser(id string) *common.User {
 	user := &common.User{}
-	req, err := http.NewRequest("GET", "http://localhost:8080/users/"+id, nil)
-	s.Assert().NoError(err)
-
-	res, err := http.DefaultClient.Do(req)
-	s.Assert().NoError(err)
-
-	err = json.NewDecoder(res.Body).Decode(&user)
-	s.Assert().NoError(err)
+	s.call("GET", "http://localhost:8080/users/"+id, nil, user)
 
 	return user
 }
@@ -65,20 +48,9 @@ func (s *testSuite) TestAddUser() {
 		Username: "username1" + uuid.New().String(),
 		Name:     "User 1" + uuid.New().String(),
 	}
-	var buf bytes.Buffer
-	err := json.NewEncoder(&buf).Encode(user)
-	s.Assert().NoError(err)
-
-	req, err := http.NewRequest("POST", "http://localhost:8080/users", ioutil.NopCloser(&buf))
-	s.Assert().NoError(err)
-
-	res, err := http.DefaultClient.Do(req)
-	s.Assert().NoError(err)
 
 	newUser := &common.User{}
-	// set new user to lastUser variable to use in other tests
-	err = json.NewDecoder(res.Body).Decode(&newUser)
-	s.Assert().NoError(err)
+	res := s.call("POST", "http://localhost:8080/users", user, newUser)
 
 	s.Assert().Equal(http.StatusCreated, res.StatusCode)
 	s.Assert().Equal(user.Name, newUser.Name)
@@ -102,18 +74,8 @@ func (s *testSuite) TestUpdateUser() {
 		Username: newName,
 		Name:     newUsername,
 	}
-	var buf bytes.Buffer
-	err := json.NewEncoder(&buf).Encode(user)
-	s.Assert().NoError(err)
 
-	req, err := http.NewRequest("PUT", "http://localhost:8080/users/"+lastUser.Id, ioutil.NopCloser(&buf))
-	s.Assert().NoError(err)
-
-	res, err := http.DefaultClient.Do(req)
-	s.Assert().NoError(err)
-
-	err = json.NewDecoder(res.Body).Decode(&lastUser)
-	s.Assert().NoError(err)
+	res := s.call("PUT", "http://localhost:8080/users/"+lastUser.Id, user, lastUser)
 
 	s.Assert().Equal(http.StatusOK, res.StatusCode)
 	s.Assert().Equal(user.Name, lastUser.Name)
@@ -129,14 +91,7 @@ func (s *testSuite) TestGetUser() {
 	lastUser := s.getLastUser()
 	user := &common.User{}
 
-	req, err := http.NewRequest("GET", "http://localhost:8080/users/"+lastUser.Id, nil)
-	s.Assert().NoError(err)
-
-	res, err := http.DefaultClient.Do(req)
-	s.Assert().NoError(err)
-
-	err = json.NewDecoder(res.Body).Decode(&user)
-	s.Assert().NoError(err)
+	res := s.call("GET", "http://localhost:8080/users/"+lastUser.Id, nil, user)
 
 	s.Assert().Equal(http.StatusOK, res.StatusCode)
 	s.Assert().Equal(lastUser, user)
@@ -147,11 +102,7 @@ func (s *testSuite) TestDeleteUser() {
 	// check number of users before addint
 	oldNumberUsers := len(s.listUsers())
 
-	req, err := http.NewRequest("DELETE", "http://localhost:8080/users/"+lastUser.Id, nil)
-	s.Assert().NoError(err)
-
-	res, err := http.DefaultClient.Do(req)
-	s.Assert().NoError(err)
+	res := s.call("DELETE", "http://localhost:8080/users/"+lastUser.Id, nil, nil)
 
 	s.Assert().Equal(http.StatusOK, res.StatusCode)
 
