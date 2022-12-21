@@ -32,6 +32,7 @@ func (s *svcTestSuite) TestAddUser() {
 
 	for index, test := range tests {
 		s.Run(index, func() {
+			// set up dao mock
 			s.getDB().
 				AddUser(test.user).
 				Return(test.dbError)
@@ -73,6 +74,7 @@ func (s *svcTestSuite) TestUpdateUser() {
 
 	for index, test := range tests {
 		s.Run(index, func() {
+			// set up dao mock
 			s.getDB().
 				UpdateUser(test.user).
 				Return(test.dbError)
@@ -114,6 +116,7 @@ func (s *svcTestSuite) TestGetUser() {
 
 	for index, test := range tests {
 		s.Run(index, func() {
+			// set up dao mock
 			s.getDB().
 				GetUser(test.id).
 				Return(test.dbUser, test.dbError)
@@ -157,6 +160,7 @@ func (s *svcTestSuite) TestDeleteUser() {
 
 	for index, test := range tests {
 		s.Run(index, func() {
+			// set up dao mock
 			s.getDB().
 				DeleteUserTasks(test.id).
 				Return(test.dbError1)
@@ -208,6 +212,7 @@ func (s *svcTestSuite) TestListUsers() {
 
 	for index, test := range tests {
 		s.Run(index, func() {
+			// set up dao mock
 			s.getDB().
 				ListUsers().
 				Return(test.dbUsers, test.dbError)
@@ -258,6 +263,7 @@ func (s *svcTestSuite) TestListUserTasks() {
 
 	for index, test := range tests {
 		s.Run(index, func() {
+			// set up dao mock
 			s.getDB().
 				ListUserTasks(test.id).
 				Return(test.dbTasks, test.dbError)

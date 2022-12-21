@@ -59,6 +59,7 @@ func (hdl *handlerTestSuite) TestAddTask() {
 				State:       test.task.State,
 			}
 
+			// set up service mock
 			hdl.getService().
 				AddTask(test.task).
 				Return(responseTask, test.svcError)
@@ -121,6 +122,7 @@ func (hdl *handlerTestSuite) TestUpdateTask() {
 			// Create a request to pass to our handler.
 			req := httptest.NewRequest("PUT", "/tasks/"+idTask, ioutil.NopCloser(&buf)).WithContext(ctx)
 
+			// set up service mock
 			hdl.getService().
 				UpdateTask(test.task).
 				Return(test.task, test.svcError)
@@ -178,6 +180,7 @@ func (hdl *handlerTestSuite) TestGetTask() {
 			// Create a request to pass to our handler.
 			req := httptest.NewRequest("GET", "/tasks/"+idTask, ioutil.NopCloser(&buf)).WithContext(ctx)
 
+			// set up service mock
 			hdl.getService().
 				GetTask(idTask).
 				Return(task, test.svcError)
@@ -223,6 +226,7 @@ func (hdl *handlerTestSuite) TestDeleteTask() {
 			// Create a request to pass to our handler.
 			req := httptest.NewRequest("DELETE", "/tasks/"+idTask, nil).WithContext(ctx)
 
+			// set up service mock
 			hdl.getService().
 				DeleteTask(idTask).
 				Return(test.svcError)
@@ -282,6 +286,7 @@ func (hdl *handlerTestSuite) TestListTasks() {
 			// Create a request to pass to our handler.
 			req := httptest.NewRequest("GET", "/tasks/", nil)
 
+			// set up service mock
 			hdl.getService().
 				ListTasks().
 				Return(tasks, test.svcError)

@@ -58,6 +58,7 @@ func (hdl *handlerTestSuite) TestAddUser() {
 				Name:     test.user.Name,
 			}
 
+			// set up service mock
 			hdl.getService().
 				AddUser(test.user).
 				Return(responseUser, test.svcError)
@@ -121,6 +122,7 @@ func (hdl *handlerTestSuite) TestUpdateUser() {
 			// Create a request to pass to our handler.
 			req := httptest.NewRequest("PUT", "/users/"+idUser, ioutil.NopCloser(&buf)).WithContext(ctx)
 
+			// set up service mock
 			hdl.getService().
 				UpdateUser(test.user).
 				Return(test.user, test.svcError)
@@ -179,6 +181,7 @@ func (hdl *handlerTestSuite) TestGetUser() {
 			// Create a request to pass to our handler.
 			req := httptest.NewRequest("GET", "/users/"+idUser, ioutil.NopCloser(&buf)).WithContext(ctx)
 
+			// set up service mock
 			hdl.getService().
 				GetUser(idUser).
 				Return(user, test.svcError)
@@ -224,6 +227,7 @@ func (hdl *handlerTestSuite) TestDeleteUser() {
 			// Create a request to pass to our handler.
 			req := httptest.NewRequest("DELETE", "/users/"+idUser, nil).WithContext(ctx)
 
+			// set up service mock
 			hdl.getService().
 				DeleteUser(idUser).
 				Return(test.svcError)

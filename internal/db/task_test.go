@@ -156,11 +156,11 @@ func (d *dbTestSuite) TestDeleteTask() {
 
 	for index, test := range tests {
 		d.Run(index, func() {
-			mockUpdate := d.mock.ExpectExec("DELETE FROM public.task").WithArgs(test.id)
+			mockDelete := d.mock.ExpectExec("DELETE FROM public.task").WithArgs(test.id)
 			if test.dbError == nil {
-				mockUpdate.WillReturnResult(sqlmock.NewResult(1, 1))
+				mockDelete.WillReturnResult(sqlmock.NewResult(1, 1))
 			} else {
-				mockUpdate.WillReturnError(test.dbError)
+				mockDelete.WillReturnError(test.dbError)
 			}
 
 			err := d.db.DeleteTask(test.id)
@@ -190,11 +190,11 @@ func (d *dbTestSuite) TestDeleteUserTasks() {
 
 	for index, test := range tests {
 		d.Run(index, func() {
-			mockUpdate := d.mock.ExpectExec("DELETE FROM public.task").WithArgs(test.id)
+			mockDelete := d.mock.ExpectExec("DELETE FROM public.task").WithArgs(test.id)
 			if test.dbError == nil {
-				mockUpdate.WillReturnResult(sqlmock.NewResult(1, 1))
+				mockDelete.WillReturnResult(sqlmock.NewResult(1, 1))
 			} else {
-				mockUpdate.WillReturnError(test.dbError)
+				mockDelete.WillReturnError(test.dbError)
 			}
 
 			err := d.db.DeleteUserTasks(test.id)
