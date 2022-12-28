@@ -17,8 +17,6 @@ spec:
       containers:
         - name: localstack
           image: localstack/localstack
-          # command: ["awslocal"]
-          # args: ["--debug", "s3api", "create-bucket", "--bucket", "wcf-audit-local"]
           env:
             - name: SERVICES
               value: s3
