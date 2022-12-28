@@ -1,0 +1,40 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: todo
+spec: 
+  replicas: 1
+  selector:
+    matchLabels:
+      app: todo
+  strategy:
+    type: Recreate 
+  template: 
+    metadata: 
+      labels: 
+        app: todo
+    spec: 
+      containers:
+        - name: todo
+          image: aborgesrodrigues/todo
+          imagePullPolicy: Never
+          env:
+            - name: CONN_STRING
+              value: postgres://postgres:example@postgres:5432/todo?sslmode=disable
+            - name: AUDITLOG_S3_BUCKET
+              value: "wcf-audit-local"
+            - name: AUDITLOG_S3_DIRECTORY
+              value: "todo-api/"
+            - name: AUDITLOG_S3_ENDPOINT
+              value: "http://localstack:4566"
+            - name: AUDITLOG_S3_REGION
+              value: "us-east-1"
+            - name: AWS_ACCESS_KEY_ID
+              value: "test"
+            - name: AWS_SECRET_ACCESS_KEY
+              value: "test"
+            - name: AWS_SESSION_TOKEN
+              value: "test"
+          ports:
+            - containerPort: 8080
+              name: todo                                            

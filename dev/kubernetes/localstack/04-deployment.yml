@@ -1,0 +1,34 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: localstack
+spec: 
+  replicas: 1
+  selector:
+    matchLabels:
+      app: localstack
+  strategy:
+    type: Recreate 
+  template: 
+    metadata: 
+      labels: 
+        app: localstack
+    spec: 
+      containers:
+        - name: localstack
+          image: localstack/localstack
+          # command: ["awslocal"]
+          # args: ["--debug", "s3api", "create-bucket", "--bucket", "wcf-audit-local"]
+          env:
+            - name: SERVICES
+              value: s3
+          ports:
+            - containerPort: 4566
+              name: todo
+          volumeMounts:
+            - name: s3-bucket-creation-script
+              mountPath: /docker-entrypoint-initaws.d
+      volumes: 
+        - name: s3-bucket-creation-script
+          configMap:
+            name: s3-bucket-creation-script

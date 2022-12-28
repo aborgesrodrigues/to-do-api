@@ -32,3 +32,16 @@ integration_test:
 generate-mocks:
 	mockgen -source internal/db/models.go -destination internal/db/mock/mock_db.go
 	mockgen -source internal/service/models.go -destination internal/service/mock/mock_service.go
+
+.PHONY: build
+build:
+	docker build -t aborgesrodrigues/todo -f dev/docker/Dockerfile .
+	minikube image load aborgesrodrigues/todo
+
+.PHONY: deploy
+deploy:
+	kubectl apply -f dev/kubernetes --recursive
+
+.PHONY: undeploy
+undeploy:
+	kubectl delete -f dev/kubernetes --recursive

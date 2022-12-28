@@ -1,0 +1,11 @@
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: storage-class-pv-claim
+spec: 
+  accessModes:
+    - ReadWriteOnce
+  storageClassName: storage-class
+  resources: 
+    requests:
+      storage: 4Gi
