@@ -2,6 +2,13 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: todo
+  annotations:
+    co.elastic.logs/enabled: "true"
+    co.elastic.logs/json.keys_under_root: "true"
+    co.elastic.logs/json.ignore_decoding_error: "true"
+    co.elastic.logs/json.overwrite_keys: "true"
+    co.elastic.logs/json.add_error_key: "true"
+    co.elastic.logs/json.expand_keys: "true"
 spec: 
   replicas: 1
   selector:
@@ -13,11 +20,25 @@ spec:
     metadata: 
       labels: 
         app: todo
+      annotations:
+        co.elastic.logs/enabled: "true"
+        co.elastic.logs/json.keys_under_root: "true"
+        co.elastic.logs/json.ignore_decoding_error: "true"
+        co.elastic.logs/json.overwrite_keys: "true"
+        co.elastic.logs/json.add_error_key: "true"
+        co.elastic.logs/json.expand_keys: "true"
     spec: 
       containers:
         - name: todo
           image: aborgesrodrigues/todo
           imagePullPolicy: Never
+          resources:
+            requests:
+              memory: "128Mi"
+              cpu: "500m"
+            limits:
+              memory: "256Mi"
+              cpu: "1000m"    
           env:
             - name: CONN_STRING
               value: postgres://postgres:example@postgres:5432/todo?sslmode=disable

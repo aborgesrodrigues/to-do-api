@@ -7,39 +7,21 @@ metadata:
     k8s-app: filebeat
 data:
   filebeat.yml: |-
-    filebeat.inputs:
-    - type: container
-      paths:
-        - /var/log/containers/*.log
-      processors:
-        - add_kubernetes_metadata:
-            host: ${NODE_NAME}
-            matchers:
-            - logs_path:
-                logs_path: "/var/log/containers/"
-
     # To enable hints based autodiscover, remove `filebeat.inputs` configuration and uncomment this:
-    #filebeat.autodiscover:
-    #  providers:
-    #    - type: kubernetes
-    #      node: ${NODE_NAME}
-    #      hints.enabled: true
-    #      hints.default_config:
-    #        type: container
-    #        paths:
-    #          - /var/log/containers/*${data.kubernetes.container.id}.log
-
-    processors:
-      - add_cloud_metadata:
-      - add_host_metadata:
-
-    cloud.id: ${ELASTIC_CLOUD_ID}
-    cloud.auth: ${ELASTIC_CLOUD_AUTH}
+    filebeat.autodiscover:
+     providers:
+       - type: kubernetes
+         node: ${NODE_NAME}
+         hints.enabled: true
+         hints.default_config.enabled: false
 
     output.elasticsearch:
       hosts: ['${ELASTICSEARCH_HOST:elasticsearch}:${ELASTICSEARCH_PORT:9200}']
       username: ${ELASTICSEARCH_USERNAME}
       password: ${ELASTICSEARCH_PASSWORD}
+
+    setup.kibana:
+      host: "kibana:5601"
 ---
 apiVersion: apps/v1
 kind: DaemonSet
@@ -63,13 +45,15 @@ spec:
       dnsPolicy: ClusterFirstWithHostNet
       containers:
       - name: filebeat
-        image: docker.elastic.co/beats/filebeat:7.17.8
+        image: docker.elastic.co/beats/filebeat:7.14.0
         args: [
           "-c", "/etc/filebeat.yml",
-          "-e",
+          "-e", "-strict.perms=false",
         ]
         env:
         - name: ELASTICSEARCH_HOST
+          value: elasticsearch
+        - name: ELASTICSEARCH_URL
           value: elasticsearch
         - name: ELASTICSEARCH_PORT
           value: "9200"

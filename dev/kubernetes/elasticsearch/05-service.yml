@@ -3,8 +3,8 @@ kind: Service
 metadata: 
   name: elasticsearch
 spec:
+  type: NodePort
   selector:
     app: elasticsearch 
   ports: 
-    - port: 9200  
-  clusterIP: None # This means we are going to use Pod IP    
+    - port: 9200 
