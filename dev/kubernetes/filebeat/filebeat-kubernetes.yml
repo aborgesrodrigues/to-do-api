@@ -43,6 +43,13 @@ spec:
       terminationGracePeriodSeconds: 30
       hostNetwork: true
       dnsPolicy: ClusterFirstWithHostNet
+      initContainers:
+        - name: init-elasticsearch
+          image: busybox:1.31
+          command: ['sh', '-c', 'echo -e "Checking for the availability of ElasticSearch Server deployment"; while ! nc -z elasticsearch 9200; do sleep 1; printf "-"; done; echo -e "  >> ElasticSearch Server has started";']
+        - name: init-kibana
+          image: busybox:1.31
+          command: ['sh', '-c', 'echo -e "Checking for the availability of Kibana Server deployment"; while ! nc -z kibana 5601; do sleep 1; printf "-"; done; echo -e "  >> Kibana Server has started";']
       containers:
       - name: filebeat
         image: docker.elastic.co/beats/filebeat:7.14.0

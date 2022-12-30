@@ -14,6 +14,10 @@ spec:
       labels: 
         app: kibana
     spec: 
+      initContainers:
+        - name: init-elasticsearch
+          image: busybox:1.31
+          command: ['sh', '-c', 'echo -e "Checking for the availability of ElasticSearch Server deployment"; while ! nc -z elasticsearch 9200; do sleep 1; printf "-"; done; echo -e "  >> ElasticSearch Server has started";']
       containers:
         - name: kibana
           image: docker.elastic.co/kibana/kibana:7.14.0

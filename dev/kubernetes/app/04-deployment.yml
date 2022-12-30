@@ -28,6 +28,19 @@ spec:
         co.elastic.logs/json.add_error_key: "true"
         co.elastic.logs/json.expand_keys: "true"
     spec: 
+      initContainers:
+        - name: init-db
+          image: busybox:1.31
+          command: ['sh', '-c', 'echo -e "Checking for the availability of Postgres Server deployment"; while ! nc -z postgres 5432; do sleep 1; printf "-"; done; echo -e "  >> Postgres DB Server has started";']
+        - name: init-localstack
+          image: busybox:1.31
+          command: ['sh', '-c', 'echo -e "Checking for the availability of LocalStack Server deployment"; while ! nc -z localstack 4566; do sleep 1; printf "-"; done; echo -e "  >> LocalStack Server has started";']
+        - name: init-elasticsearch
+          image: busybox:1.31
+          command: ['sh', '-c', 'echo -e "Checking for the availability of ElasticSearch Server deployment"; while ! nc -z elasticsearch 9200; do sleep 1; printf "-"; done; echo -e "  >> ElasticSearch Server has started";']
+        - name: init-kibana
+          image: busybox:1.31
+          command: ['sh', '-c', 'echo -e "Checking for the availability of Kibana Server deployment"; while ! nc -z kibana 5601; do sleep 1; printf "-"; done; echo -e "  >> Kibana Server has started";']
       containers:
         - name: todo
           image: aborgesrodrigues/todo
