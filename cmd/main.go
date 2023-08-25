@@ -21,6 +21,7 @@ const (
 )
 
 func main() {
+	// initiate viper
 	viper.AutomaticEnv()
 
 	logger := getLogger()
