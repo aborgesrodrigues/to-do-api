@@ -4,4 +4,4 @@ metadata:
   name: s3-bucket-creation-script
 data: 
   create-resource.sh: |-
-    awslocal --debug s3api create-bucket --bucket wcf-audit-local
+    awslocal --debug s3api create-bucket --bucket audit-local

@@ -36,7 +36,8 @@ generate-mocks:
 .PHONY: build
 build:
 	docker build -t aborgesrodrigues/todo -f dev/docker/Dockerfile .
-	minikube image load aborgesrodrigues/todo
+	docker push aborgesrodrigues/todo
+# minikube image load aborgesrodrigues/todo
 
 .PHONY: deploy
 deploy:

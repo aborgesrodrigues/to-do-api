@@ -54,9 +54,9 @@ spec:
               cpu: "1000m"    
           env:
             - name: CONN_STRING
-              value: host=localhost user=pguser password=pguser dbname=todo port=5432 sslmode=disable
+              value: host=postgres user=pguser password=pguser dbname=todo port=5432 sslmode=disable
             - name: AUDITLOG_S3_BUCKET
-              value: "wcf-audit-local"
+              value: "audit-local"
             - name: AUDITLOG_S3_DIRECTORY
               value: "todo-api/"
             - name: AUDITLOG_S3_ENDPOINT
