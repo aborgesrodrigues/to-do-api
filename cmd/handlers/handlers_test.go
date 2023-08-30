@@ -28,7 +28,10 @@ func (hdl *handlerTestSuite) SetupSuite() {
 
 	defer auditLogger.Close()
 
-	hdl.handler = New(logger, auditLogger)
+	hdl.handler = &Handler{
+		Logger:      logger,
+		AuditLogger: auditLogger,
+	}
 }
 
 func (hdl *handlerTestSuite) SetupTest() {

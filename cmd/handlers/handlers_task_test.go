@@ -5,7 +5,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -50,7 +50,7 @@ func (hdl *handlerTestSuite) TestAddTask() {
 			hdl.Assert().NoError(err)
 
 			// Create a request to pass to our handler.
-			req := httptest.NewRequest("POST", "/tasks", ioutil.NopCloser(&buf))
+			req := httptest.NewRequest("POST", "/tasks", io.NopCloser(&buf))
 			id := uuid.New().String()
 			responseTask := &common.Task{
 				Id:          id,
@@ -120,7 +120,7 @@ func (hdl *handlerTestSuite) TestUpdateTask() {
 			hdl.Assert().NoError(err)
 
 			// Create a request to pass to our handler.
-			req := httptest.NewRequest("PUT", "/tasks/"+idTask, ioutil.NopCloser(&buf)).WithContext(ctx)
+			req := httptest.NewRequest("PUT", "/tasks/"+idTask, io.NopCloser(&buf)).WithContext(ctx)
 
 			// set up service mock
 			hdl.getService().
@@ -178,7 +178,7 @@ func (hdl *handlerTestSuite) TestGetTask() {
 			hdl.Assert().NoError(err)
 
 			// Create a request to pass to our handler.
-			req := httptest.NewRequest("GET", "/tasks/"+idTask, ioutil.NopCloser(&buf)).WithContext(ctx)
+			req := httptest.NewRequest("GET", "/tasks/"+idTask, io.NopCloser(&buf)).WithContext(ctx)
 
 			// set up service mock
 			hdl.getService().

@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"context"
 	"io"
-	"io/ioutil"
 	"net/http"
 	"time"
 
@@ -76,7 +75,7 @@ func AccessLogger(opt AccessLoggerOptions) func(next http.Handler) http.Handler 
 
 				// If audit logging request, we'll need a copy of the request body.
 				tee := io.TeeReader(req.Body, &reqBuf)
-				req.Body = ioutil.NopCloser(tee)
+				req.Body = io.NopCloser(tee)
 			}
 			var resBuf bytes.Buffer
 			if opt.HTTPAuditLogger != nil && opt.HTTPAuditLogger.Logger != nil &&
@@ -92,7 +91,7 @@ func AccessLogger(opt AccessLoggerOptions) func(next http.Handler) http.Handler 
 				// Doing this after ServeHTTP so request body will be written to TeeReader.
 				clone := req.Clone(context.Background())
 				if reqBuf.Len() > 0 {
-					clone.Body = ioutil.NopCloser(&reqBuf)
+					clone.Body = io.NopCloser(&reqBuf)
 				} else {
 					// Server requests are always non-nil, which causes httputil.DumpRequest to
 					// write 'null' as the body representation when in fact there was none.
@@ -110,7 +109,7 @@ func AccessLogger(opt AccessLoggerOptions) func(next http.Handler) http.Handler 
 				!opt.HTTPAuditLogger.Opt.DisableResponseAuditLogs {
 
 				respCopy := &http.Response{
-					Body:          ioutil.NopCloser(&resBuf),
+					Body:          io.NopCloser(&resBuf),
 					ContentLength: int64(ww.BytesWritten()),
 					Header:        ww.Header(),
 					Proto:         req.Proto,

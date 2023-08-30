@@ -2,7 +2,7 @@ package logging
 
 import (
 	"context"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"strings"
 	"sync"
@@ -143,7 +143,7 @@ func getRequestMetadata(ctx context.Context, req *http.Request) []audit.Metadata
 		audit.Metadata{Name: "headers", Value: req.Header},
 	)
 	if req.Body != nil {
-		body, err := ioutil.ReadAll(req.Body)
+		body, err := io.ReadAll(req.Body)
 		if err != nil {
 			m = append(m, audit.Metadata{Name: "bodyReadError", Value: err.Error()})
 		}
@@ -167,7 +167,7 @@ func getResponseMetadata(ctx context.Context, res *http.Response) []audit.Metada
 		audit.Metadata{Name: "headers", Value: res.Header},
 	)
 	if res.Body != nil {
-		body, err := ioutil.ReadAll(res.Body)
+		body, err := io.ReadAll(res.Body)
 		if err != nil {
 			m = append(m, audit.Metadata{Name: "bodyReadError", Value: err.Error()})
 		}
