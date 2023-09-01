@@ -55,35 +55,35 @@ func main() {
 	}
 }
 
-func getRouter(svc *handlers.Handler) *chi.Mux {
+func getRouter(hdl *handlers.Handler) *chi.Mux {
 	r := chi.NewRouter()
 
 	r.Group(func(r chi.Router) {
-		r.Use(logging.RequestLogger(svc.Logger))
+		r.Use(logging.RequestLogger(hdl.Logger))
 		r.Use(handlers.AccessLogger(handlers.AccessLoggerOptions{
-			HTTPAuditLogger: svc.AuditLogger,
+			HTTPAuditLogger: hdl.AuditLogger,
 		}))
 
 		r.Route("/users", func(r chi.Router) {
-			r.Get("/", svc.ListUsers)
-			r.Post("/", svc.AddUser)
+			r.Get("/", hdl.ListUsers)
+			r.Post("/", hdl.AddUser)
 			r.Route("/{userId}", func(r chi.Router) {
-				r.Use(svc.IdMiddleware)
-				r.Get("/", svc.GetUser)
-				r.Put("/", svc.UpdateUser)
-				r.Delete("/", svc.DeleteUser)
-				r.Get("/tasks", svc.ListUserTasks)
+				r.Use(hdl.IdMiddleware)
+				r.Get("/", hdl.GetUser)
+				r.Put("/", hdl.UpdateUser)
+				r.Delete("/", hdl.DeleteUser)
+				r.Get("/tasks", hdl.ListUserTasks)
 			})
 		})
 
 		r.Route("/tasks", func(r chi.Router) {
-			r.Get("/", svc.ListTasks)
-			r.Post("/", svc.AddTask)
+			r.Get("/", hdl.ListTasks)
+			r.Post("/", hdl.AddTask)
 			r.Route("/{taskId}", func(r chi.Router) {
-				r.Use(svc.IdMiddleware)
-				r.Get("/", svc.GetTask)
-				r.Put("/", svc.UpdateTask)
-				r.Delete("/", svc.DeleteTask)
+				r.Use(hdl.IdMiddleware)
+				r.Get("/", hdl.GetTask)
+				r.Put("/", hdl.UpdateTask)
+				r.Delete("/", hdl.DeleteTask)
 			})
 		})
 	})
