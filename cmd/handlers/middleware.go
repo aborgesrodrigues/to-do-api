@@ -3,13 +3,18 @@ package handlers
 import (
 	"bytes"
 	"context"
+	"errors"
 	"io"
 	"net/http"
+	"strings"
 	"time"
 
+	"github.com/aborgesrodrigues/to-do-api/internal/common"
 	"github.com/aborgesrodrigues/to-do-api/internal/logging"
 	"github.com/go-chi/chi/middleware"
 	"github.com/go-chi/chi/v5"
+	"github.com/golang-jwt/jwt/v5"
+	"github.com/spf13/viper"
 	"go.uber.org/zap"
 )
 
@@ -123,4 +128,53 @@ func AccessLogger(opt AccessLoggerOptions) func(next http.Handler) http.Handler 
 			}
 		})
 	}
+}
+
+func (handler *Handler) VerifyJWT(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(rw http.ResponseWriter, r *http.Request) {
+		if headerToken := r.Header.Get("Authorization"); headerToken != "" {
+			headerToken = strings.Replace(headerToken, "Bearer ", "", 1)
+			token, err := jwt.ParseWithClaims(headerToken, &common.Claims{}, func(token *jwt.Token) (interface{}, error) {
+				jwtSecretKey := viper.GetString(envJWTSecretKey)
+				return []byte(jwtSecretKey), nil
+			})
+
+			if err != nil {
+				switch {
+				case errors.Is(err, jwt.ErrTokenMalformed):
+					handler.Logger.Error("Malformed token")
+				case errors.Is(err, jwt.ErrTokenSignatureInvalid):
+					handler.Logger.Error("Invalid Signature")
+				case errors.Is(err, jwt.ErrTokenExpired) || errors.Is(err, jwt.ErrTokenNotValidYet):
+					handler.Logger.Error("Invalid time")
+				default:
+					handler.Logger.Error("Error parsing token")
+				}
+
+				writeResponse(rw, http.StatusUnauthorized, err)
+				return
+			}
+
+			if !token.Valid {
+				handler.Logger.Error("Invalid token")
+				writeResponse(rw, http.StatusUnauthorized, "Invalid token")
+				return
+			}
+			claims, ok := token.Claims.(*common.Claims)
+			if !ok {
+				handler.Logger.Error("Invalid type of claims")
+				writeResponse(rw, http.StatusUnauthorized, "Invalid type of claims")
+				return
+			}
+
+			handler.Logger.Info("Valid user", zap.Any("user", claims.CustomClaims["user"]))
+
+			next.ServeHTTP(rw, r)
+			return
+		}
+
+		handler.Logger.Error("Token not informed")
+		writeResponse(rw, http.StatusUnauthorized, "You're Unauthorized due to No token in the header")
+		return
+	})
 }

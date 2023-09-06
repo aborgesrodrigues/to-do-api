@@ -16,6 +16,7 @@ services:
       AWS_ACCESS_KEY_ID: "test"
       AWS_SECRET_ACCESS_KEY: "test"
       AWS_SESSION_TOKEN: "test"
+      JWT_SECRET_KEY: g2ZWQUjt6csyUTgDmMEZqmG3Dz9gWENFX@AuLwVppKgW@@6jtQ7@FJGbuL!R9xxfQkj8Y@8tj!eq2@u*nxgVC*62sC!sWT3BwjZT
     labels:
         co.elastic.logs/enabled: true
         co.elastic.logs/json.keys_under_root: true

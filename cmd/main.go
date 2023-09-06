@@ -64,28 +64,38 @@ func getRouter(hdl *handlers.Handler) *chi.Mux {
 			HTTPAuditLogger: hdl.AuditLogger,
 		}))
 
-		r.Route("/users", func(r chi.Router) {
-			r.Get("/", hdl.ListUsers)
+		// no JWT
+		r.Route("/token", func(r chi.Router) {
 			r.Post("/", hdl.AddUser)
-			r.Route("/{userId}", func(r chi.Router) {
-				r.Use(hdl.IdMiddleware)
-				r.Get("/", hdl.GetUser)
-				r.Put("/", hdl.UpdateUser)
-				r.Delete("/", hdl.DeleteUser)
-				r.Get("/tasks", hdl.ListUserTasks)
+		})
+
+		// with JWT
+		r.Route("/", func(r chi.Router) {
+			r.Use(hdl.VerifyJWT)
+			r.Route("/users", func(r chi.Router) {
+				r.Get("/", hdl.ListUsers)
+				r.Post("/", hdl.AddUser)
+				r.Route("/{userId}", func(r chi.Router) {
+					r.Use(hdl.IdMiddleware)
+					r.Get("/", hdl.GetUser)
+					r.Put("/", hdl.UpdateUser)
+					r.Delete("/", hdl.DeleteUser)
+					r.Get("/tasks", hdl.ListUserTasks)
+				})
+			})
+
+			r.Route("/tasks", func(r chi.Router) {
+				r.Get("/", hdl.ListTasks)
+				r.Post("/", hdl.AddTask)
+				r.Route("/{taskId}", func(r chi.Router) {
+					r.Use(hdl.IdMiddleware)
+					r.Get("/", hdl.GetTask)
+					r.Put("/", hdl.UpdateTask)
+					r.Delete("/", hdl.DeleteTask)
+				})
 			})
 		})
 
-		r.Route("/tasks", func(r chi.Router) {
-			r.Get("/", hdl.ListTasks)
-			r.Post("/", hdl.AddTask)
-			r.Route("/{taskId}", func(r chi.Router) {
-				r.Use(hdl.IdMiddleware)
-				r.Get("/", hdl.GetTask)
-				r.Put("/", hdl.UpdateTask)
-				r.Delete("/", hdl.DeleteTask)
-			})
-		})
 	})
 
 	return r

@@ -6,6 +6,7 @@ require (
 	github.com/DATA-DOG/go-sqlmock v1.5.0
 	github.com/aws/aws-sdk-go v1.44.152
 	github.com/go-chi/chi v1.5.4
+	github.com/golang-jwt/jwt/v5 v5.0.0
 	github.com/golang/mock v1.4.4
 	github.com/google/uuid v1.1.2
 	github.com/stretchr/testify v1.8.1

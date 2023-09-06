@@ -23,7 +23,18 @@ func (handler *Handler) AddUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	writeResponse(w, http.StatusCreated, user)
+	token, err := generateJWT(user)
+	if err != nil {
+		handler.Logger.Error("Error generating JWT.", zap.Error(err))
+		writeResponse(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+
+	writeResponse(w, http.StatusCreated,
+		map[string]any{
+			"user":  user,
+			"token": token,
+		})
 }
 
 func (handler *Handler) UpdateUser(w http.ResponseWriter, r *http.Request) {
@@ -51,7 +62,7 @@ func (handler *Handler) GetUser(w http.ResponseWriter, r *http.Request) {
 
 	user, err := handler.svc.GetUser(id)
 	if err != nil {
-		handler.Logger.Error("Unable to retrieve users.", zap.Error(err))
+		handler.Logger.Error("Unable to retrieve user.", zap.Error(err))
 		writeResponse(w, http.StatusInternalServerError, err.Error())
 		return
 	}

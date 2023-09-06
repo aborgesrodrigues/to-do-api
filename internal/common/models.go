@@ -1,5 +1,7 @@
 package common
 
+import "github.com/golang-jwt/jwt/v5"
+
 type TaskState string
 
 type User struct {
@@ -19,4 +21,9 @@ type Task struct {
 type Metadata struct {
 	Name  string
 	Value interface{}
+}
+
+type Claims struct {
+	jwt.RegisteredClaims
+	CustomClaims map[string]any `json:"custom_claims"`
 }
