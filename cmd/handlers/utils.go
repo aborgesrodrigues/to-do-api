@@ -34,24 +34,42 @@ func writeResponse(w http.ResponseWriter, status int, message interface{}) {
 	json.NewEncoder(w).Encode(message)
 }
 
-func generateJWT(user *common.User) (string, error) {
-	claims := common.Claims{
+func generateJWT(user *common.User) (string, string, error) {
+	jwtSecretKey := viper.GetString(envJWTSecretKey)
+
+	// access token
+	accessClaims := common.Claims{
 		RegisteredClaims: jwt.RegisteredClaims{
-			ExpiresAt: jwt.NewNumericDate(time.Now().Add(10 * time.Minute)),
+			ExpiresAt: jwt.NewNumericDate(time.Now().Add(20 * time.Second)),
 		},
-		CustomClaims: map[string]any{
-			"user": user,
-		},
+		Type:   common.AccessTokenType,
+		UserID: user.Id,
 	}
 
 	// generate a string using claims
-	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
+	accessToken := jwt.NewWithClaims(jwt.SigningMethodHS256, accessClaims)
 
-	jwtSecretKey := viper.GetString(envJWTSecretKey)
-	tokenString, err := token.SignedString([]byte(jwtSecretKey))
+	accessTokenString, err := accessToken.SignedString([]byte(jwtSecretKey))
 	if err != nil {
-		return "", err
+		return "", "", err
 	}
 
-	return tokenString, nil
+	// refresh token
+	refreshClaims := common.Claims{
+		RegisteredClaims: jwt.RegisteredClaims{
+			ExpiresAt: jwt.NewNumericDate(time.Now().Add(1 * time.Hour)),
+		},
+		Type:   common.RefreshTokenType,
+		UserID: user.Id,
+	}
+
+	// generate a string using claims
+	refreshToken := jwt.NewWithClaims(jwt.SigningMethodHS256, refreshClaims)
+
+	refreshTokenString, err := refreshToken.SignedString([]byte(jwtSecretKey))
+	if err != nil {
+		return "", "", err
+	}
+
+	return accessTokenString, refreshTokenString, nil
 }

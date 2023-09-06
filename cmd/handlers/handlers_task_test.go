@@ -92,7 +92,7 @@ func (hdl *handlerTestSuite) TestUpdateTask() {
 	// We create a ResponseRecorder (which satisfies http.ResponseWriter) to record the response.
 	handler := http.HandlerFunc(hdl.handler.UpdateTask)
 
-	ctx := context.WithValue(context.Background(), taskIdCtx, idTask)
+	ctx := context.WithValue(context.Background(), idCtx, idTask)
 
 	errUpdateTask := errors.New("error updating task")
 	tests := map[string]struct {
@@ -153,7 +153,7 @@ func (hdl *handlerTestSuite) TestGetTask() {
 	// We create a ResponseRecorder (which satisfies http.ResponseWriter) to record the response.
 	handler := http.HandlerFunc(hdl.handler.GetTask)
 
-	ctx := context.WithValue(context.Background(), taskIdCtx, idTask)
+	ctx := context.WithValue(context.Background(), idCtx, idTask)
 
 	errGetTask := errors.New("error retrieving task")
 	tests := map[string]struct {
@@ -202,7 +202,7 @@ func (hdl *handlerTestSuite) TestDeleteTask() {
 	// We create a ResponseRecorder (which satisfies http.ResponseWriter) to record the response.
 	handler := http.HandlerFunc(hdl.handler.DeleteTask)
 
-	ctx := context.WithValue(context.Background(), taskIdCtx, idTask)
+	ctx := context.WithValue(context.Background(), idCtx, idTask)
 
 	errDeleteTask := errors.New("error deleting task")
 	tests := map[string]struct {

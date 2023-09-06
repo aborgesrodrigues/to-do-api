@@ -21,25 +21,21 @@ import (
 type ctxKey string
 
 const (
-	userIdCtx = ctxKey("userId")
-	taskIdCtx = ctxKey("taskId")
+	idCtx = ctxKey("Id")
 )
 
 func (handler *Handler) IdMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(rw http.ResponseWriter, r *http.Request) {
-		userId := chi.URLParam(r, string(userIdCtx))
-		if userId != "" {
-			r = r.WithContext(context.WithValue(r.Context(), userIdCtx, userId))
+		id := chi.URLParam(r, string(idCtx))
+		if id != "" {
+			r = r.WithContext(context.WithValue(r.Context(), idCtx, id))
 		}
-		taskId := chi.URLParam(r, string(taskIdCtx))
-		if taskId != "" {
-			r = r.WithContext(context.WithValue(r.Context(), taskIdCtx, taskId))
-		}
-		handler.Logger.Debug(taskId)
 
-		if userId == "" && taskId == "" {
-			handler.Logger.Error("User id not passed.")
-			writeResponse(rw, http.StatusBadRequest, "User id not passed.")
+		handler.Logger.Debug(id)
+
+		if id == "" {
+			handler.Logger.Error("Id not passed.")
+			writeResponse(rw, http.StatusBadRequest, "Id not passed.")
 			return
 		}
 
@@ -132,49 +128,94 @@ func AccessLogger(opt AccessLoggerOptions) func(next http.Handler) http.Handler 
 
 func (handler *Handler) VerifyJWT(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(rw http.ResponseWriter, r *http.Request) {
-		if headerToken := r.Header.Get("Authorization"); headerToken != "" {
-			headerToken = strings.Replace(headerToken, "Bearer ", "", 1)
-			token, err := jwt.ParseWithClaims(headerToken, &common.Claims{}, func(token *jwt.Token) (interface{}, error) {
-				jwtSecretKey := viper.GetString(envJWTSecretKey)
-				return []byte(jwtSecretKey), nil
-			})
-
-			if err != nil {
-				switch {
-				case errors.Is(err, jwt.ErrTokenMalformed):
-					handler.Logger.Error("Malformed token")
-				case errors.Is(err, jwt.ErrTokenSignatureInvalid):
-					handler.Logger.Error("Invalid Signature")
-				case errors.Is(err, jwt.ErrTokenExpired) || errors.Is(err, jwt.ErrTokenNotValidYet):
-					handler.Logger.Error("Invalid time")
-				default:
-					handler.Logger.Error("Error parsing token")
-				}
-
-				writeResponse(rw, http.StatusUnauthorized, err)
-				return
-			}
-
-			if !token.Valid {
-				handler.Logger.Error("Invalid token")
-				writeResponse(rw, http.StatusUnauthorized, "Invalid token")
-				return
-			}
-			claims, ok := token.Claims.(*common.Claims)
-			if !ok {
-				handler.Logger.Error("Invalid type of claims")
-				writeResponse(rw, http.StatusUnauthorized, "Invalid type of claims")
-				return
-			}
-
-			handler.Logger.Info("Valid user", zap.Any("user", claims.CustomClaims["user"]))
-
-			next.ServeHTTP(rw, r)
+		claims, err := handler.validateJWT(r)
+		if err != nil {
+			handler.Logger.Error("Error validating JWT")
+			writeResponse(rw, http.StatusUnauthorized, err.Error())
 			return
 		}
 
-		handler.Logger.Error("Token not informed")
-		writeResponse(rw, http.StatusUnauthorized, "You're Unauthorized due to No token in the header")
+		// force use of access token only
+		if claims.Type != common.AccessTokenType || claims.UserID == "" {
+			handler.Logger.Error("Use of the invalid type of jwt token")
+			writeResponse(rw, http.StatusUnauthorized, "You're Unauthorized due to Invalid type of jwt token")
+			return
+		}
+
+		next.ServeHTTP(rw, r)
 		return
 	})
+}
+
+func (handler *Handler) VerifyRefreshJWT(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(rw http.ResponseWriter, r *http.Request) {
+		claims, err := handler.validateJWT(r)
+		if err != nil {
+			handler.Logger.Error("Error validating JWT")
+			writeResponse(rw, http.StatusUnauthorized, err.Error())
+			return
+		}
+
+		// force use of access token only
+		if claims.Type != common.RefreshTokenType || claims.UserID == "" {
+			handler.Logger.Error("Use of the invalid type of jwt token")
+			writeResponse(rw, http.StatusUnauthorized, "You're Unauthorized due to Invalid type of jwt token")
+			return
+		}
+
+		next.ServeHTTP(rw, r)
+		return
+	})
+}
+
+func (handler *Handler) validateJWT(r *http.Request) (*common.Claims, error) {
+	var id string
+	if r.Context().Value(id) != nil {
+		id = r.Context().Value(id).(string)
+	}
+
+	if headerToken := r.Header.Get("Authorization"); headerToken != "" {
+		headerToken = strings.Replace(headerToken, "Bearer ", "", 1)
+		token, err := jwt.ParseWithClaims(headerToken, &common.Claims{}, func(token *jwt.Token) (interface{}, error) {
+			jwtSecretKey := viper.GetString(envJWTSecretKey)
+			return []byte(jwtSecretKey), nil
+		})
+
+		if err != nil {
+			switch {
+			case errors.Is(err, jwt.ErrTokenMalformed):
+				handler.Logger.Error("Malformed token")
+			case errors.Is(err, jwt.ErrTokenSignatureInvalid):
+				handler.Logger.Error("Invalid Signature")
+			case errors.Is(err, jwt.ErrTokenExpired) || errors.Is(err, jwt.ErrTokenNotValidYet):
+				handler.Logger.Error("Invalid time")
+			default:
+				handler.Logger.Error("Error parsing token")
+			}
+
+			return nil, err
+		}
+
+		if !token.Valid {
+			handler.Logger.Error("Invalid token")
+			return nil, errors.New("invalid token")
+		}
+		claims, ok := token.Claims.(*common.Claims)
+		if !ok {
+			handler.Logger.Error("Invalid type of claims")
+			return nil, errors.New("invalid type of claims")
+		}
+
+		// TODO improve validation of a token for a specific id
+		if id != "" && claims.UserID != id {
+			handler.Logger.Error("Invalid token for this id")
+			return nil, errors.New("invalid token for this id")
+		}
+
+		handler.Logger.Info("Valid user", zap.String("user", claims.UserID))
+
+		return claims, nil
+	}
+
+	return nil, errors.New("no authorization header informed")
 }

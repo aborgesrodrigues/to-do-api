@@ -4,6 +4,13 @@ import "github.com/golang-jwt/jwt/v5"
 
 type TaskState string
 
+type tokenType string
+
+const (
+	AccessTokenType  = tokenType("ACCESS")
+	RefreshTokenType = tokenType("REFRESH")
+)
+
 type User struct {
 	Id       string `json:"id"`
 	Username string `json:"username"`
@@ -25,5 +32,6 @@ type Metadata struct {
 
 type Claims struct {
 	jwt.RegisteredClaims
-	CustomClaims map[string]any `json:"custom_claims"`
+	Type   tokenType `json:"type"`
+	UserID string    `json:"user_id"`
 }

@@ -92,7 +92,7 @@ func (hdl *handlerTestSuite) TestUpdateUser() {
 	// We create a ResponseRecorder (which satisfies http.ResponseWriter) to record the response.
 	handler := http.HandlerFunc(hdl.handler.UpdateUser)
 
-	ctx := context.WithValue(context.Background(), userIdCtx, idUser)
+	ctx := context.WithValue(context.Background(), idCtx, idUser)
 
 	errUpdateUser := errors.New("error updating user")
 	tests := map[string]struct {
@@ -154,7 +154,7 @@ func (hdl *handlerTestSuite) TestGetUser() {
 	// We create a ResponseRecorder (which satisfies http.ResponseWriter) to record the response.
 	handler := http.HandlerFunc(hdl.handler.GetUser)
 
-	ctx := context.WithValue(context.Background(), userIdCtx, idUser)
+	ctx := context.WithValue(context.Background(), idCtx, idUser)
 
 	errGetUser := errors.New("error retrieving user")
 	tests := map[string]struct {
@@ -203,7 +203,7 @@ func (hdl *handlerTestSuite) TestDeleteUser() {
 	// We create a ResponseRecorder (which satisfies http.ResponseWriter) to record the response.
 	handler := http.HandlerFunc(hdl.handler.DeleteUser)
 
-	ctx := context.WithValue(context.Background(), userIdCtx, idUser)
+	ctx := context.WithValue(context.Background(), idCtx, idUser)
 
 	errDeleteUser := errors.New("error deleting user")
 	tests := map[string]struct {
@@ -316,7 +316,7 @@ func (hdl *handlerTestSuite) TestListUserTasks() {
 			State:       "to_do",
 		},
 	}
-	ctx := context.WithValue(context.Background(), userIdCtx, idUser)
+	ctx := context.WithValue(context.Background(), idCtx, idUser)
 
 	// We create a ResponseRecorder (which satisfies http.ResponseWriter) to record the response.
 	handler := http.HandlerFunc(hdl.handler.ListUserTasks)
