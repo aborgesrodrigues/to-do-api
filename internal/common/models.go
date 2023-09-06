@@ -1,6 +1,15 @@
 package common
 
+import "github.com/golang-jwt/jwt/v5"
+
 type TaskState string
+
+type tokenType string
+
+const (
+	AccessTokenType  = tokenType("ACCESS")
+	RefreshTokenType = tokenType("REFRESH")
+)
 
 type User struct {
 	Id       string `json:"id"`
@@ -19,4 +28,10 @@ type Task struct {
 type Metadata struct {
 	Name  string
 	Value interface{}
+}
+
+type Claims struct {
+	jwt.RegisteredClaims
+	Type   tokenType `json:"type"`
+	UserID string    `json:"user_id"`
 }

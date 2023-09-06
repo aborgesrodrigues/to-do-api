@@ -33,7 +33,7 @@ func (handler *Handler) UpdateTask(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	request.Id = r.Context().Value(taskIdCtx).(string)
+	request.Id = r.Context().Value(idCtx).(string)
 
 	task, err := handler.svc.UpdateTask(request)
 	if err != nil {
@@ -46,7 +46,7 @@ func (handler *Handler) UpdateTask(w http.ResponseWriter, r *http.Request) {
 }
 
 func (handler *Handler) GetTask(w http.ResponseWriter, r *http.Request) {
-	id := r.Context().Value(taskIdCtx).(string)
+	id := r.Context().Value(idCtx).(string)
 
 	task, err := handler.svc.GetTask(id)
 	if err != nil {
@@ -59,7 +59,7 @@ func (handler *Handler) GetTask(w http.ResponseWriter, r *http.Request) {
 }
 
 func (handler *Handler) DeleteTask(w http.ResponseWriter, r *http.Request) {
-	id := r.Context().Value(taskIdCtx).(string)
+	id := r.Context().Value(idCtx).(string)
 	err := handler.svc.DeleteTask(id)
 	if err != nil {
 		handler.Logger.Error("Unable to delete tasks.", zap.Error(err))

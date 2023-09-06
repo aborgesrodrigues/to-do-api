@@ -23,7 +23,19 @@ func (handler *Handler) AddUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	writeResponse(w, http.StatusCreated, user)
+	accessToken, refreshToken, err := generateJWT(user)
+	if err != nil {
+		handler.Logger.Error("Error generating JWT.", zap.Error(err))
+		writeResponse(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+
+	writeResponse(w, http.StatusCreated,
+		map[string]any{
+			"user":          user,
+			"access_token":  accessToken,
+			"refresh_token": refreshToken,
+		})
 }
 
 func (handler *Handler) UpdateUser(w http.ResponseWriter, r *http.Request) {
@@ -34,7 +46,7 @@ func (handler *Handler) UpdateUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	request.Id = r.Context().Value(userIdCtx).(string)
+	request.Id = r.Context().Value(idCtx).(string)
 
 	user, err := handler.svc.UpdateUser(request)
 	if err != nil {
@@ -47,11 +59,11 @@ func (handler *Handler) UpdateUser(w http.ResponseWriter, r *http.Request) {
 }
 
 func (handler *Handler) GetUser(w http.ResponseWriter, r *http.Request) {
-	id := r.Context().Value(userIdCtx).(string)
+	id := r.Context().Value(idCtx).(string)
 
 	user, err := handler.svc.GetUser(id)
 	if err != nil {
-		handler.Logger.Error("Unable to retrieve users.", zap.Error(err))
+		handler.Logger.Error("Unable to retrieve user.", zap.Error(err))
 		writeResponse(w, http.StatusInternalServerError, err.Error())
 		return
 	}
@@ -60,7 +72,7 @@ func (handler *Handler) GetUser(w http.ResponseWriter, r *http.Request) {
 }
 
 func (handler *Handler) DeleteUser(w http.ResponseWriter, r *http.Request) {
-	id := r.Context().Value(userIdCtx).(string)
+	id := r.Context().Value(idCtx).(string)
 
 	// delete user
 	if err := handler.svc.DeleteUser(id); err != nil {
@@ -86,7 +98,7 @@ func (handler *Handler) ListUsers(w http.ResponseWriter, r *http.Request) {
 }
 
 func (handler *Handler) ListUserTasks(w http.ResponseWriter, r *http.Request) {
-	id := r.Context().Value(userIdCtx).(string)
+	id := r.Context().Value(idCtx).(string)
 
 	users, err := handler.svc.ListUserTasks(id)
 	if err != nil {
@@ -96,4 +108,29 @@ func (handler *Handler) ListUserTasks(w http.ResponseWriter, r *http.Request) {
 	}
 
 	writeResponse(w, http.StatusOK, users)
+}
+
+func (handler *Handler) RefreshToken(w http.ResponseWriter, r *http.Request) {
+	id := r.Context().Value(idCtx).(string)
+
+	user, err := handler.svc.GetUser(id)
+	if err != nil {
+		handler.Logger.Error("Unable to retrieve user.", zap.Error(err))
+		writeResponse(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+
+	accessToken, refreshToken, err := generateJWT(user)
+	if err != nil {
+		handler.Logger.Error("Error generating JWT.", zap.Error(err))
+		writeResponse(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+
+	writeResponse(w, http.StatusCreated,
+		map[string]any{
+			"user":          user,
+			"access_token":  accessToken,
+			"refresh_token": refreshToken,
+		})
 }
