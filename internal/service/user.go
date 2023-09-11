@@ -4,10 +4,18 @@ import (
 	"github.com/aborgesrodrigues/to-do-api/internal/common"
 	"github.com/google/uuid"
 	"go.uber.org/zap"
+	"golang.org/x/crypto/bcrypt"
 )
 
 func (svc *Service) AddUser(user *common.User) (*common.User, error) {
 	user.Id = uuid.New().String()
+	bytes, err := bcrypt.GenerateFromPassword([]byte(user.Password), 14)
+
+	if err != nil {
+		svc.logger.Error("Unable hash password.", zap.Error(err))
+		return nil, err
+	}
+	user.Password = string(bytes)
 
 	if err := svc.db.AddUser(user); err != nil {
 		svc.logger.Error("Unable add user.", zap.Error(err))
@@ -33,6 +41,15 @@ func (svc *Service) GetUser(id string) (*common.User, error) {
 		return nil, err
 	}
 
+	return user, nil
+}
+
+func (svc *Service) Login(username, password string) (*common.User, error) {
+	user, err := svc.db.GetUserByUsernamePassword(username, password)
+	if err != nil {
+		svc.logger.Error("Unable to retrieve user.", zap.Error(err))
+		return nil, err
+	}
 	return user, nil
 }
 

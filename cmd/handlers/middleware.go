@@ -169,11 +169,6 @@ func (handler *Handler) VerifyRefreshJWT(next http.Handler) http.Handler {
 }
 
 func (handler *Handler) validateJWT(r *http.Request) (*common.Claims, error) {
-	var id string
-	if r.Context().Value(id) != nil {
-		id = r.Context().Value(id).(string)
-	}
-
 	if headerToken := r.Header.Get("Authorization"); headerToken != "" {
 		headerToken = strings.Replace(headerToken, "Bearer ", "", 1)
 		token, err := jwt.ParseWithClaims(headerToken, &common.Claims{}, func(token *jwt.Token) (interface{}, error) {
@@ -206,8 +201,7 @@ func (handler *Handler) validateJWT(r *http.Request) (*common.Claims, error) {
 			return nil, errors.New("invalid type of claims")
 		}
 
-		// TODO improve validation of a token for a specific id
-		if id != "" && claims.UserID != id {
+		if headerId := r.Header.Get("Id"); claims.UserID != headerId {
 			handler.Logger.Error("Invalid token for this id")
 			return nil, errors.New("invalid token for this id")
 		}

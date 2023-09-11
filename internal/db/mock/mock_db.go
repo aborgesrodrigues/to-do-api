@@ -134,6 +134,21 @@ func (mr *MockDBInterfaceMockRecorder) GetUser(id interface{}) *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetUser", reflect.TypeOf((*MockDBInterface)(nil).GetUser), id)
 }
 
+// GetUserByUsernamePassword mocks base method.
+func (m *MockDBInterface) GetUserByUsernamePassword(username, password string) (*common.User, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetUserByUsernamePassword", username, password)
+	ret0, _ := ret[0].(*common.User)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetUserByUsernamePassword indicates an expected call of GetUserByUsernamePassword.
+func (mr *MockDBInterfaceMockRecorder) GetUserByUsernamePassword(username, password interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetUserByUsernamePassword", reflect.TypeOf((*MockDBInterface)(nil).GetUserByUsernamePassword), username, password)
+}
+
 // ListTasks mocks base method.
 func (m *MockDBInterface) ListTasks() ([]common.Task, error) {
 	m.ctrl.T.Helper()

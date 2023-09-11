@@ -19,6 +19,7 @@ type DBInterface interface {
 	AddUser(user *common.User) error
 	UpdateUser(user *common.User) error
 	GetUser(id string) (*common.User, error)
+	GetUserByUsernamePassword(username, password string) (*common.User, error)
 	DeleteUser(id string) error
 	ListUsers() ([]common.User, error)
 }

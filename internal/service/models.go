@@ -19,6 +19,7 @@ type SVCInterface interface {
 	GetUser(id string) (*common.User, error)
 	DeleteUser(id string) error
 	ListUsers() ([]common.User, error)
+	Login(id, password string) (*common.User, error)
 }
 
 type Config struct {

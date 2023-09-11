@@ -64,41 +64,42 @@ func getRouter(hdl *handlers.Handler) *chi.Mux {
 			HTTPAuditLogger: hdl.AuditLogger,
 		}))
 
-		// no JWT
-		r.Route("/token", func(r chi.Router) {
-			r.Post("/", hdl.AddUser)
-		})
-
-		// refresh token
-		r.Route("/users/{Id}/refresh_token", func(r chi.Router) {
-			r.Use(hdl.IdMiddleware)
-			r.Use(hdl.VerifyRefreshJWT)
-			r.Get("/", hdl.RefreshToken)
-		})
-
 		// with JWT
 		r.Route("/", func(r chi.Router) {
-			r.Use(hdl.VerifyJWT)
-			r.Route("/users", func(r chi.Router) {
-				r.Get("/", hdl.ListUsers)
-				r.Post("/", hdl.AddUser)
-				r.Route("/{Id}", func(r chi.Router) {
-					r.Use(hdl.IdMiddleware)
-					r.Get("/", hdl.GetUser)
-					r.Put("/", hdl.UpdateUser)
-					r.Delete("/", hdl.DeleteUser)
-					r.Get("/tasks", hdl.ListUserTasks)
+			r.Group(func(r chi.Router) {
+				// no JWT
+				r.Post("/token", hdl.AddUser)
+				r.Post("/login", hdl.Login)
+
+				// refresh token
+				r.Route("/refresh_token", func(r chi.Router) {
+					r.Use(hdl.VerifyRefreshJWT)
+					r.Get("/", hdl.RefreshToken)
 				})
 			})
+			r.Group(func(r chi.Router) {
+				r.Use(hdl.VerifyJWT)
+				r.Route("/users", func(r chi.Router) {
+					r.Get("/", hdl.ListUsers)
+					r.Post("/", hdl.AddUser)
+					r.Route("/{Id}", func(r chi.Router) {
+						r.Use(hdl.IdMiddleware)
+						r.Get("/", hdl.GetUser)
+						r.Put("/", hdl.UpdateUser)
+						r.Delete("/", hdl.DeleteUser)
+						r.Get("/tasks", hdl.ListUserTasks)
+					})
+				})
 
-			r.Route("/tasks", func(r chi.Router) {
-				r.Get("/", hdl.ListTasks)
-				r.Post("/", hdl.AddTask)
-				r.Route("/{Id}", func(r chi.Router) {
-					r.Use(hdl.IdMiddleware)
-					r.Get("/", hdl.GetTask)
-					r.Put("/", hdl.UpdateTask)
-					r.Delete("/", hdl.DeleteTask)
+				r.Route("/tasks", func(r chi.Router) {
+					r.Get("/", hdl.ListTasks)
+					r.Post("/", hdl.AddTask)
+					r.Route("/{Id}", func(r chi.Router) {
+						r.Use(hdl.IdMiddleware)
+						r.Get("/", hdl.GetTask)
+						r.Put("/", hdl.UpdateTask)
+						r.Delete("/", hdl.DeleteTask)
+					})
 				})
 			})
 		})

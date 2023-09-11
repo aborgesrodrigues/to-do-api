@@ -40,7 +40,7 @@ func generateJWT(user *common.User) (string, string, error) {
 	// access token
 	accessClaims := common.Claims{
 		RegisteredClaims: jwt.RegisteredClaims{
-			ExpiresAt: jwt.NewNumericDate(time.Now().Add(20 * time.Second)),
+			ExpiresAt: jwt.NewNumericDate(time.Now().Add(10 * time.Minute)),
 		},
 		Type:   common.AccessTokenType,
 		UserID: user.Id,

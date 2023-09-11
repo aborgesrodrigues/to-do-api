@@ -1,6 +1,7 @@
     CREATE TABLE public."user" (
       username varchar NOT NULL,
       "name" varchar NOT NULL,
+      "password" varchar NOT NULL,
       id uuid NOT NULL,
       CONSTRAINT user_pk PRIMARY KEY (id)
     );

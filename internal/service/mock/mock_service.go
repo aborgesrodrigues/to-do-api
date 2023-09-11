@@ -167,6 +167,21 @@ func (mr *MockSVCInterfaceMockRecorder) ListUsers() *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListUsers", reflect.TypeOf((*MockSVCInterface)(nil).ListUsers))
 }
 
+// Login mocks base method.
+func (m *MockSVCInterface) Login(id, password string) (*common.User, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Login", id, password)
+	ret0, _ := ret[0].(*common.User)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// Login indicates an expected call of Login.
+func (mr *MockSVCInterfaceMockRecorder) Login(id, password interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Login", reflect.TypeOf((*MockSVCInterface)(nil).Login), id, password)
+}
+
 // UpdateTask mocks base method.
 func (m *MockSVCInterface) UpdateTask(task *common.Task) (*common.Task, error) {
 	m.ctrl.T.Helper()

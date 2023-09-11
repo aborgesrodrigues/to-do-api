@@ -38,6 +38,36 @@ func (handler *Handler) AddUser(w http.ResponseWriter, r *http.Request) {
 		})
 }
 
+func (handler *Handler) Login(w http.ResponseWriter, r *http.Request) {
+	request := &common.User{}
+	if err := json.NewDecoder(r.Body).Decode(request); err != nil {
+		handler.Logger.Error("Unable to decode request body.", zap.Error(err))
+		writeResponse(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+
+	user, err := handler.svc.Login(request.Username, request.Password)
+	if err != nil {
+		handler.Logger.Error("Unable to login.", zap.Error(err))
+		writeResponse(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+
+	accessToken, refreshToken, err := generateJWT(user)
+	if err != nil {
+		handler.Logger.Error("Error generating JWT.", zap.Error(err))
+		writeResponse(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+
+	writeResponse(w, http.StatusOK,
+		map[string]any{
+			"user":          user,
+			"access_token":  accessToken,
+			"refresh_token": refreshToken,
+		})
+}
+
 func (handler *Handler) UpdateUser(w http.ResponseWriter, r *http.Request) {
 	request := &common.User{}
 	if err := json.NewDecoder(r.Body).Decode(request); err != nil {
