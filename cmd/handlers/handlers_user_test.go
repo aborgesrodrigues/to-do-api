@@ -149,6 +149,7 @@ func (hdl *handlerTestSuite) TestGetUser() {
 		Id:       idUser,
 		Username: "username1",
 		Name:     "User Name 1",
+		Password: "password1",
 	}
 
 	// We create a ResponseRecorder (which satisfies http.ResponseWriter) to record the response.
@@ -163,7 +164,7 @@ func (hdl *handlerTestSuite) TestGetUser() {
 	}{
 		"success": {
 			svcError:     nil,
-			expectedResp: `{"id":"0001","username":"username1","name":"User Name 1"}`,
+			expectedResp: `{"id":"0001","username":"username1","name":"User Name 1","password":"password1"}`,
 		},
 		"fail": {
 			svcError:     errGetUser,
@@ -250,11 +251,13 @@ func (hdl *handlerTestSuite) TestListUsers() {
 			Id:       "0001",
 			Username: "username1",
 			Name:     "User Name 1",
+			Password: "password1",
 		},
 		{
 			Id:       "0002",
 			Username: "username2",
 			Name:     "User Name 2",
+			Password: "password2",
 		},
 	}
 
@@ -270,7 +273,7 @@ func (hdl *handlerTestSuite) TestListUsers() {
 		"success": {
 			users:        users,
 			svcError:     nil,
-			expectedResp: `[{"id":"0001","username":"username1","name":"User Name 1"},{"id":"0002","username":"username2","name":"User Name 2"}]`,
+			expectedResp: `[{"id":"0001","username":"username1","name":"User Name 1","password":"password1"},{"id":"0002","username":"username2","name":"User Name 2","password":"password2"}]`,
 		},
 		"fail": {
 			svcError:     errGetUsers,

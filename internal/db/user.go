@@ -130,7 +130,8 @@ func (db *DB) ListUsers() ([]common.User, error) {
 		err = results.Scan(
 			&user.Id,
 			&user.Username,
-			&user.Name)
+			&user.Name,
+			&user.Password)
 		if err != nil {
 			db.logger.Error("Error mapping database data to struct.")
 			return nil, err
