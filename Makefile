@@ -23,6 +23,7 @@ complete_test:
 test:
 	@go test -tags=unit -v -timeout 30s -coverprofile=cov.out ./...
 	@go tool cover -func=cov.out
+	@go tool cover -html=cov.out
 
 .PHONY: integration_test
 integration_test:

@@ -362,3 +362,67 @@ func (hdl *handlerTestSuite) TestListUserTasks() {
 		})
 	}
 }
+
+func (hdl *handlerTestSuite) TestLogin() {
+	idUser := "0001"
+	user := &common.User{
+		Id:       idUser,
+		Username: "username1",
+		Name:     "User Name 1",
+		Password: "password1",
+	}
+	loginPayload := map[string]string{
+		"username": user.Username,
+		"password": user.Password,
+	}
+
+	// We create a ResponseRecorder (which satisfies http.ResponseWriter) to record the response.
+	handler := http.HandlerFunc(hdl.handler.Login)
+
+	errGetUser := errors.New("error retrieving user")
+	tests := map[string]struct {
+		svcError     error
+		expectedResp string
+	}{
+		"success": {
+			svcError:     nil,
+			expectedResp: `{"user":{"id":"0001","username":"username1","name":"User Name 1","password":"password1"}}`,
+		},
+		"fail": {
+			svcError:     errGetUser,
+			expectedResp: `"error retrieving user"`,
+		},
+	}
+
+	for index, test := range tests {
+		hdl.Run(index, func() {
+			rr := httptest.NewRecorder()
+			var buf bytes.Buffer
+			err := json.NewEncoder(&buf).Encode(loginPayload)
+			hdl.Assert().NoError(err)
+
+			// Create a request to pass to our handler.
+			req := httptest.NewRequest("GET", "/login", io.NopCloser(&buf))
+
+			// set up service mock
+			hdl.getService().
+				Login(user.Username, user.Password).
+				Return(user, test.svcError)
+
+			handler.ServeHTTP(rr, req)
+			if test.svcError == nil {
+				hdl.Assert().Equal(http.StatusOK, rr.Code)
+			} else {
+				hdl.Assert().Equal(http.StatusInternalServerError, rr.Code)
+			}
+			response := strings.TrimSpace(rr.Body.String())
+			index := strings.Index(response, `"user"`)
+			initial := "{"
+			if index < 0 {
+				index = 0
+				initial = ""
+			}
+			hdl.Assert().Equal(test.expectedResp, fmt.Sprintf(`%s%s`, initial, response[index:]))
+		})
+	}
+}
