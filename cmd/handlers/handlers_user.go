@@ -139,28 +139,3 @@ func (handler *Handler) ListUserTasks(w http.ResponseWriter, r *http.Request) {
 
 	writeResponse(w, http.StatusOK, users)
 }
-
-func (handler *Handler) RefreshToken(w http.ResponseWriter, r *http.Request) {
-	id := r.Context().Value(idCtx).(string)
-
-	user, err := handler.svc.GetUser(id)
-	if err != nil {
-		handler.Logger.Error("Unable to retrieve user.", zap.Error(err))
-		writeResponse(w, http.StatusInternalServerError, err.Error())
-		return
-	}
-
-	accessToken, refreshToken, err := generateJWT(user)
-	if err != nil {
-		handler.Logger.Error("Error generating JWT.", zap.Error(err))
-		writeResponse(w, http.StatusInternalServerError, err.Error())
-		return
-	}
-
-	writeResponse(w, http.StatusCreated,
-		map[string]any{
-			"user":          user,
-			"access_token":  accessToken,
-			"refresh_token": refreshToken,
-		})
-}

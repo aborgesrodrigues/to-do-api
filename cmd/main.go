@@ -74,7 +74,7 @@ func getRouter(hdl *handlers.Handler) *chi.Mux {
 				// refresh token
 				r.Route("/refresh_token", func(r chi.Router) {
 					r.Use(hdl.VerifyRefreshJWT)
-					r.Get("/", hdl.RefreshToken)
+					r.Post("/", hdl.Login)
 				})
 			})
 			r.Group(func(r chi.Router) {
