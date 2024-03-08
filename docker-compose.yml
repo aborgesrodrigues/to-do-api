@@ -56,14 +56,16 @@ services:
       - ./dev/filebeat/filebeat.docker.yml:/usr/share/filebeat/filebeat.yml
       - /var/lib/docker/containers:/var/lib/docker/containers:ro
       - /var/run/docker.sock:/var/run/docker.sock:ro
+      - ./dev/filebeat/elasticsearch-ca.pem:/usr/share/filebeat/certs/elasticsearch-ca.pem
   elasticsearch:
     labels:
       co.elastic.logs/enabled: false
-    environment: 
-      - discovery.type=single-node
     image: docker.elastic.co/elasticsearch/elasticsearch:7.14.0
+    volumes:
+      - ./dev/elasticsearch/elasticsearch.yml:/usr/share/elasticsearch/config/elasticsearch.yml
+      - ./dev/elasticsearch/http.p12:/usr/share/elasticsearch/config/certs/http.p12
     healthcheck:
-      test: ["CMD", "curl", "-s", "-f", "http://localhost:9200/_cat/health"]
+      test: ["CMD", "curl", "-s", "-f", "-k", "https://localhost:9200/_cat/health"]
       interval: 3s
       timeout: 3s
       retries: 80
@@ -71,11 +73,14 @@ services:
       - 9200:9200
   kibana:
     image: docker.elastic.co/kibana/kibana:7.14.0
+    volumes:
+      - ./dev/kibana/kibana.docker.yml:/usr/share/kibana/config/kibana.yml
+      - ./dev/kibana/elasticsearch-ca.pem:/usr/share/kibana/certs/elasticsearch-ca.pem
     depends_on:
       elasticsearch:
         condition: service_healthy
     healthcheck:
-      test: ["CMD", "curl", "-s", "-f", "http://localhost:5601/api/status"]
+      test: ["CMD", "curl", "-s", "-f", "-k", "http://localhost:5601/api/status"]
       interval: 3s
       timeout: 3s
       retries: 80
