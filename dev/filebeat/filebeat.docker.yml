@@ -8,8 +8,8 @@ output.elasticsearch:
   hosts: ["https://elasticsearch:9200"] 
   username: "elastic"
   password: "changeme"
-  protocol: "https"
-  ssl.verification_mode: "none"
-  ssl.certificate_authorities: ["/usr/share/filebeat/certs/elasticsearch-ca.pem"]
+  ssl.certificate_authorities: ["/usr/share/filebeat/config/ca.crt"]
+  ssl.certificate: "/usr/share/filebeat/config/filebeat.crt"
+  ssl.key: "/usr/share/filebeat/config/filebeat.key"
 setup.kibana:
   host: "kibana:5601"
