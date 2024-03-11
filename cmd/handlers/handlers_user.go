@@ -94,6 +94,9 @@ func (handler *Handler) ListUsers(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	handler.Logger.Info("Users listed.",
+		zap.Bool("success", true))
+
 	writeResponse(w, http.StatusOK, users)
 }
 

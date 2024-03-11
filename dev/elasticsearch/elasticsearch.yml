@@ -1,0 +1,25 @@
+cluster.name: "docker-cluster"
+network.host: 0.0.0.0
+discovery.type: single-node
+
+## License
+xpack.license.self_generated.type: trial
+
+# Security
+xpack.security.enabled: true
+xpack.security.authc.token.enabled: true
+xpack.security.authc.api_key.enabled: true
+
+# transport security settings
+# This is mostly used for inter-node communications between parts of the ELK stack
+xpack.security.transport.ssl.enabled: true
+xpack.security.transport.ssl.key: /usr/share/elasticsearch/config/elasticsearch.key
+xpack.security.transport.ssl.certificate: /usr/share/elasticsearch/config/elasticsearch.crt
+xpack.security.transport.ssl.certificate_authorities: /usr/share/elasticsearch/config//ca.crt
+
+# HTTP security setttings
+# This is used for client server ssl/tls communications (e.g. browser to kibana)
+xpack.security.http.ssl.enabled: true
+xpack.security.http.ssl.key: /usr/share/elasticsearch/config/elasticsearch.key
+xpack.security.http.ssl.certificate: /usr/share/elasticsearch/config/elasticsearch.crt
+xpack.security.http.ssl.certificate_authorities: /usr/share/elasticsearch/config/ca.crt
