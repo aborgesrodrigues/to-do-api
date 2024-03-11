@@ -143,7 +143,6 @@ func (handler *Handler) VerifyJWT(next http.Handler) http.Handler {
 		}
 
 		next.ServeHTTP(rw, r)
-		return
 	})
 }
 
@@ -164,7 +163,6 @@ func (handler *Handler) VerifyRefreshJWT(next http.Handler) http.Handler {
 		}
 
 		next.ServeHTTP(rw, r)
-		return
 	})
 }
 
