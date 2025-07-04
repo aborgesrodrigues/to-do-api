@@ -2,6 +2,8 @@ package main
 
 import (
 	"net/http"
+	"net/http/pprof"
+	_ "net/http/pprof"
 
 	"github.com/aborgesrodrigues/to-do-api/cmd/handlers"
 	"github.com/aborgesrodrigues/to-do-api/internal/audit"
@@ -60,6 +62,21 @@ func getRouter(hdl *handlers.Handler) *chi.Mux {
 	r := chi.NewRouter()
 
 	r.Group(func(r chi.Router) {
+		r.Route("/debug/pprof", func(r chi.Router) {
+			r.Get("/", pprof.Index)
+			r.Get("/cmdline", pprof.Cmdline)
+			r.Get("/profile", pprof.Profile)
+			r.Post("/symbol", pprof.Symbol)
+			r.Get("/symbol", pprof.Symbol)
+			r.Get("/trace", pprof.Trace)
+			// Rotas para todas as profiles específicas, ex: /debug/pprof/goroutine
+			r.Get("/allocs", pprof.Handler("allocs").ServeHTTP)
+			r.Get("/block", pprof.Handler("block").ServeHTTP)
+			r.Get("/goroutine", pprof.Handler("goroutine").ServeHTTP)
+			r.Get("/heap", pprof.Handler("heap").ServeHTTP)
+			r.Get("/mutex", pprof.Handler("mutex").ServeHTTP)
+			r.Get("/threadcreate", pprof.Handler("threadcreate").ServeHTTP)
+		})
 		r.Route("/metrics", func(r chi.Router) {
 			// Nenhum middleware aplicado aqui
 			r.Get("/", promhttp.Handler().ServeHTTP)
