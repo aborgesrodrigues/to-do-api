@@ -1,4 +1,4 @@
-FROM golang:1.18.8-alpine3.16 as builder
+FROM golang:1.24-alpine as builder
 WORKDIR /build
 RUN apk add gcc git libc-dev
 
@@ -11,7 +11,7 @@ RUN CGO_ENABLED=0 GOOS=linux go build -ldflags '-linkmode=external' -o server cm
 
 # Must match the alpine version used in the builder stage for Dynatrace
 # to instrument correctly.
-FROM alpine:3.16
+FROM alpine:latest
 WORKDIR /usr/local/bin/
 EXPOSE 8080
 RUN apk add --no-cache ca-certificates libc6-compat

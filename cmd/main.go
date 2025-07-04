@@ -7,6 +7,7 @@ import (
 	"github.com/aborgesrodrigues/to-do-api/internal/audit"
 	"github.com/aborgesrodrigues/to-do-api/internal/logging"
 	"github.com/go-chi/chi/v5"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/spf13/viper"
 
 	"go.uber.org/zap"
@@ -59,10 +60,10 @@ func getRouter(hdl *handlers.Handler) *chi.Mux {
 	r := chi.NewRouter()
 
 	r.Group(func(r chi.Router) {
-		r.Use(logging.RequestLogger(hdl.Logger))
-		r.Use(handlers.AccessLogger(handlers.AccessLoggerOptions{
-			HTTPAuditLogger: hdl.AuditLogger,
-		}))
+		r.Route("/metrics", func(r chi.Router) {
+			// Nenhum middleware aplicado aqui
+			r.Get("/", promhttp.Handler().ServeHTTP)
+		})
 
 		// no JWT
 		r.Route("/token", func(r chi.Router) {
@@ -78,7 +79,13 @@ func getRouter(hdl *handlers.Handler) *chi.Mux {
 
 		// with JWT
 		r.Route("/", func(r chi.Router) {
+			r.Use(logging.RequestLogger(hdl.Logger))
+			r.Use(handlers.AccessLogger(handlers.AccessLoggerOptions{
+				HTTPAuditLogger: hdl.AuditLogger,
+			}))
 			r.Use(hdl.VerifyJWT)
+			r.Use(hdl.Metrics)
+
 			r.Route("/users", func(r chi.Router) {
 				r.Get("/", hdl.ListUsers)
 				r.Post("/", hdl.AddUser)

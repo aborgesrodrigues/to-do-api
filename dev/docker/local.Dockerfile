@@ -1,4 +1,4 @@
-FROM golang:1.18.8-alpine3.16 as builder
+FROM golang:1.24-alpine as builder
 WORKDIR /build
 
 RUN apk add gcc git libc-dev
@@ -14,4 +14,4 @@ ENV GOOS=linux
 COPY . .
 
 EXPOSE 8080
-ENTRYPOINT CompileDaemon --build="go build -ldflags '-linkmode=external' cmd/main.go" --command=./main -log-prefix=false
+ENTRYPOINT CompileDaemon --build="go build cmd/main.go" --command=./main -log-prefix=false

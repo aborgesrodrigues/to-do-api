@@ -6,6 +6,7 @@ import (
 	"errors"
 	"io"
 	"net/http"
+	"strconv"
 	"strings"
 	"time"
 
@@ -14,6 +15,8 @@ import (
 	"github.com/go-chi/chi/middleware"
 	"github.com/go-chi/chi/v5"
 	"github.com/golang-jwt/jwt/v5"
+	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/promauto"
 	"github.com/spf13/viper"
 	"go.uber.org/zap"
 )
@@ -216,4 +219,47 @@ func (handler *Handler) validateJWT(r *http.Request) (*common.Claims, error) {
 	}
 
 	return nil, errors.New("no authorization header informed")
+}
+
+var reqLatencyHistogram = promauto.NewHistogramVec(prometheus.HistogramOpts{
+	Name: "request_latency",
+	Help: "Latency of HTTP requests",
+	Buckets: []float64{
+		.1,
+		1,
+		25,
+		50,
+		100,
+		150,
+		200,
+		250,
+		500,
+		1000,
+		2500,
+		5000,
+		10000,
+	},
+}, []string{"path", "status"})
+
+var reqCount = promauto.NewCounterVec(prometheus.CounterOpts{
+	Name: "request_count",
+	Help: "Latency of HTTP requests",
+}, []string{"path", "status"})
+
+func (handler *Handler) Metrics(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(rw http.ResponseWriter, r *http.Request) {
+		start := time.Now()
+		ww := middleware.NewWrapResponseWriter(rw, r.ProtoMajor)
+
+		next.ServeHTTP(ww, r)
+
+		delay := time.Since(start).Milliseconds()
+		labels := prometheus.Labels{
+			"path":   r.URL.Path,
+			"status": strconv.Itoa(ww.Status()),
+		}
+
+		reqLatencyHistogram.With(labels).Observe(float64(delay))
+		reqCount.With(labels).Inc()
+	})
 }
