@@ -43,7 +43,9 @@ func main() {
 		logger.Fatal("Unable to instantiate S3 audit writer.", zap.Error(err))
 	}
 	auditLogger, err := logging.NewHTTPAuditLogger(logging.HTTPAuditLogOptions{
-		Writer: auditWriter,
+		Writer:                   auditWriter,
+		DisableRequestAuditLogs:  true,
+		DisableResponseAuditLogs: true,
 	})
 	if err != nil {
 		logger.Fatal("Unable to instantiate audit logger.", zap.Error(err))
