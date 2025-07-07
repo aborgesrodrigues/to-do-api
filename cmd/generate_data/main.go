@@ -40,7 +40,16 @@ func main() {
 }
 
 func worker(input chan common.User) {
-	bearerToken := "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE3NTE2NTk1MzAsInR5cGUiOiJBQ0NFU1MiLCJ1c2VyX2lkIjoiM2MxOTNhYzEtYmUyYi00NTI4LTk5ZjktZDA0ZTVhNjIxYjI1In0.egvdxoLrbYPQ1jVgSbPftghJ5g5E-T2cDFVNOouJqgI"
+	adminUser := common.User{
+		Username: "admin",
+		Name:     "Admin",
+	}
+	response, err := doRequest[map[string]any](http.MethodPost, "http://localhost:8080/token", "", adminUser)
+	if err != nil {
+		log.Fatalf("Error requesting: %v", err)
+	}
+
+	bearerToken := (*response)["access_token"].(string)
 	for user := range input {
 		response, err := doRequest[map[string]any](http.MethodPost, "http://localhost:8080/users", bearerToken, user)
 		if err != nil {

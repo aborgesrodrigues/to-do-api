@@ -1,8 +1,10 @@
 // Package audit provides an interface for audit logging.
 // The audit logger is provided an EventWriter at creation to control what happens to audit events as they arrive.
 // Two EventWriters are provided:
+//
 //	zapWriter writes events to a zap.Logger.
 //	s3Writer writes events to an S3 bucket.
+//
 // A custom EventWriter can be provided by the caller if desired.
 // It is the user's responsibility to call Close() on the audit logger instance before shutting down their application to ensure
 // writes to the audit logger are flushed and final writes are performed.
@@ -142,7 +144,9 @@ func NewLogger(config Config, writer EventWriter) (*Logger, error) {
 		wg:          &sync.WaitGroup{},
 	}
 	logger.wg.Add(1)
-	go processAuditEvents(logger)
+	for range 4 {
+		go processAuditEvents(logger)
+	}
 	return logger, nil
 }
 

@@ -46,11 +46,32 @@ func (handler *Handler) IdMiddleware(next http.Handler) http.Handler {
 	})
 }
 
+var reqLatencyAuditHistogram = promauto.NewHistogramVec(prometheus.HistogramOpts{
+	Name: "request_latency_audit",
+	Help: "Latency of Audit",
+	Buckets: []float64{
+		.1,
+		1,
+		25,
+		50,
+		100,
+		150,
+		200,
+		250,
+		500,
+		1000,
+		2500,
+		5000,
+		10000,
+	},
+}, []string{"disable_request_audit_logs", "disable_response_audit_logs", "buffer_size"})
+
 // AccessLogger returns a Chi middleware which writes access logs using zap.
 // This requires RequestCorrelationLogger having been called earlier in the middleware chain.
 func AccessLogger(opt AccessLoggerOptions) func(next http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(res http.ResponseWriter, req *http.Request) {
+			startMetric := time.Now()
 			// Need to make a copy of ctx before next.ServeHTTP is called.
 			ctx := req.Context()
 			logger, err := logging.LoggerFromContext(req.Context())
@@ -125,6 +146,15 @@ func AccessLogger(opt AccessLoggerOptions) func(next http.Handler) http.Handler 
 				}
 				go opt.HTTPAuditLogger.LogUpstreamResponse(ctx, logger, respCopy)
 			}
+
+			delay := time.Since(startMetric).Milliseconds()
+			labels := prometheus.Labels{
+				"disable_request_audit_logs":  strconv.FormatBool(opt.HTTPAuditLogger.Opt.DisableResponseAuditLogs),
+				"disable_response_audit_logs": strconv.FormatBool(opt.HTTPAuditLogger.Opt.DisableResponseAuditLogs),
+				"buffer_size":                 strconv.Itoa(opt.HTTPAuditLogger.Opt.Config.BufferSize),
+			}
+
+			reqLatencyAuditHistogram.With(labels).Observe(float64(delay))
 		})
 	}
 }
