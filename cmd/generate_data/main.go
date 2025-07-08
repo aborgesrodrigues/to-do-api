@@ -5,14 +5,15 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"log"
 	"net/http"
 	"sync"
 
 	"github.com/aborgesrodrigues/to-do-api/internal/common"
+	"go.uber.org/zap"
 )
 
 func main() {
+	logger, _ := zap.NewDevelopment()
 	inputChan := make(chan common.User, 100)
 	var wg sync.WaitGroup
 
@@ -20,7 +21,7 @@ func main() {
 		wg.Add(1)
 		go func() {
 			defer wg.Done()
-			worker(inputChan)
+			worker(inputChan, logger)
 		}()
 	}
 
@@ -36,24 +37,24 @@ func main() {
 	}()
 
 	wg.Wait()
-	log.Print("Finished")
+	logger.Info("Finished")
 }
 
-func worker(input chan common.User) {
+func worker(input chan common.User, logger *zap.Logger) {
 	adminUser := common.User{
 		Username: "admin",
 		Name:     "Admin",
 	}
-	response, err := doRequest[map[string]any](http.MethodPost, "http://localhost:8080/token", "", adminUser)
+	response, err := doRequest[map[string]any](http.MethodPost, "http://localhost:8080/token", "", adminUser, logger)
 	if err != nil {
-		log.Fatalf("Error requesting: %v", err)
+		logger.Fatal("Error requesting", zap.Error(err))
 	}
 
 	bearerToken := (*response)["access_token"].(string)
 	for user := range input {
-		response, err := doRequest[map[string]any](http.MethodPost, "http://localhost:8080/users", bearerToken, user)
+		response, err := doRequest[map[string]any](http.MethodPost, "http://localhost:8080/users", bearerToken, user, logger)
 		if err != nil {
-			log.Fatalf("Error requesting: %v", err)
+			logger.Fatal("Error requesting", zap.Error(err))
 		}
 
 		user := (*response)["user"].(map[string]any)
@@ -64,23 +65,23 @@ func worker(input chan common.User) {
 				State:       common.TaskState("to_do"),
 			}
 
-			_, err := doRequest[map[string]any](http.MethodPost, "http://localhost:8080/tasks", bearerToken, task)
+			_, err := doRequest[map[string]any](http.MethodPost, "http://localhost:8080/tasks", bearerToken, task, logger)
 			if err != nil {
-				log.Fatalf("Error requesting: %v", err)
+				logger.Fatal("Error requesting", zap.Error(err))
 			}
 		}
 
-		log.Printf("Added user %s, %s", user["id"], user["username"])
+		logger.Info("Added user", zap.String("id", user["id"].(string)), zap.String("username", user["username"].(string)))
 	}
 }
 
-func doRequest[T any](method, url, bearerToken string, input any) (*T, error) {
+func doRequest[T any](method, url, bearerToken string, input any, logger *zap.Logger) (*T, error) {
 	bInput, err := json.Marshal(input)
 	if err != nil {
 		return nil, err
 	}
 
-	req, err := http.NewRequest(method, url, bytes.NewBuffer(bInput))
+	req, err := http.NewRequest(method, url, io.NopCloser(bytes.NewReader(bInput)))
 	if err != nil {
 		return nil, err
 	}
@@ -91,6 +92,7 @@ func doRequest[T any](method, url, bearerToken string, input any) (*T, error) {
 
 	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
+		logger.Error("Error doing request", zap.String("method", method), zap.String("url", url), zap.String("input", string(bInput)), zap.Error(err))
 		return nil, err
 	}
 	defer resp.Body.Close()
@@ -100,7 +102,7 @@ func doRequest[T any](method, url, bearerToken string, input any) (*T, error) {
 	var output T
 	err = json.Unmarshal(respBody, &output)
 	if err != nil {
-		log.Fatalf("Error unmarshalling: %#v %v", string(respBody), err)
+		logger.Fatal("Error unmarshalling", zap.String("respBody", string(respBody)), zap.Error(err))
 	}
 
 	return &output, nil
