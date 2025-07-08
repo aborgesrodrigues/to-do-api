@@ -47,7 +47,7 @@ func main() {
 		// DisableRequestAuditLogs:  true,
 		// DisableResponseAuditLogs: true,
 		Config: audit.Config{
-			BufferSize: 100000,
+			BufferSize: 1000000,
 		},
 	})
 	if err != nil {
