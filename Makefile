@@ -8,7 +8,7 @@ clean:
 
 .PHONY: run
 run:
-	docker-compose up --build
+	docker-compose up -d --build
 
 .PHONY: support
 support:
