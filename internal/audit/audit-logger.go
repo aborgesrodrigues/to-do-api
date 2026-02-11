@@ -143,8 +143,9 @@ func NewLogger(config Config, writer EventWriter) (*Logger, error) {
 		config:      config,
 		wg:          &sync.WaitGroup{},
 	}
-	logger.wg.Add(1)
+
 	for range 4 {
+		logger.wg.Add(1)
 		go processAuditEvents(logger)
 	}
 	return logger, nil
