@@ -12,7 +12,7 @@ func getRouter(hdl *handlers.Handler) *chi.Mux {
 		r.Route("/users", func(r chi.Router) {
 			r.Get("/", hdl.ListUsers)
 			r.Post("/", hdl.AddUser)
-			r.Route("/{userId}", func(r chi.Router) {
+			r.Route("/{Id}", func(r chi.Router) {
 				r.Use(hdl.IdMiddleware)
 				r.Get("/", hdl.GetUser)
 				r.Put("/", hdl.UpdateUser)
@@ -24,7 +24,7 @@ func getRouter(hdl *handlers.Handler) *chi.Mux {
 		r.Route("/tasks", func(r chi.Router) {
 			r.Get("/", hdl.ListTasks)
 			r.Post("/", hdl.AddTask)
-			r.Route("/{taskId}", func(r chi.Router) {
+			r.Route("/{Id}", func(r chi.Router) {
 				r.Use(hdl.IdMiddleware)
 				r.Get("/", hdl.GetTask)
 				r.Put("/", hdl.UpdateTask)
