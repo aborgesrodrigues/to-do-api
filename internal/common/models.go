@@ -11,6 +11,12 @@ const (
 	RefreshTokenType = tokenType("REFRESH")
 )
 
+type AuthResponse struct {
+	AccessToken  string `json:"access_token"`
+	RefreshToken string `json:"refresh_token"`
+	User         User   `json:"user"`
+}
+
 type User struct {
 	Id       string `json:"id"`
 	Username string `json:"username"`

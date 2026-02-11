@@ -49,12 +49,12 @@ func (s *testSuite) TestAddUser() {
 		Name:     "User 1" + uuid.New().String(),
 	}
 
-	newUser := &common.User{}
+	newUser := &common.AuthResponse{}
 	res := s.call("POST", "http://localhost:8080/users", user, newUser)
 
 	s.Assert().Equal(http.StatusCreated, res.StatusCode)
-	s.Assert().Equal(user.Name, newUser.Name)
-	s.Assert().Equal(user.Username, newUser.Username)
+	s.Assert().Equal(user.Name, newUser.User.Name)
+	s.Assert().Equal(user.Username, newUser.User.Username)
 
 	// check number of users after add user
 	newNumberUsers := len(s.listUsers())
