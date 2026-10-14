@@ -24,24 +24,20 @@ import (
 type ctxKey string
 
 const (
-	idCtx     = ctxKey("Id")
+	idCtx     = ctxKey("id")
 	claimsKey = ctxKey("claims")
 )
 
 func (handler *Handler) IdMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(rw http.ResponseWriter, r *http.Request) {
 		id := chi.URLParam(r, string(idCtx))
-		if id != "" {
-			r = r.WithContext(context.WithValue(r.Context(), idCtx, id))
-		}
-
-		handler.Logger.Debug(id)
-
 		if id == "" {
 			handler.Logger.Error("Id not passed.")
 			writeResponse(rw, http.StatusBadRequest, "Id not passed.")
 			return
 		}
+
+		r = r.WithContext(context.WithValue(r.Context(), idCtx, id))
 
 		next.ServeHTTP(rw, r)
 	})

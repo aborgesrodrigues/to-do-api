@@ -85,7 +85,7 @@ func getRouter(hdl *handlers.Handler) *chi.Mux {
 		})
 
 		// refresh token
-		r.Route("/users/{Id}/refresh_token", func(r chi.Router) {
+		r.Route("/users/{id}/refresh_token", func(r chi.Router) {
 			r.Use(hdl.IdMiddleware)
 			r.Use(hdl.VerifyRefreshJWT)
 			r.Get("/", hdl.RefreshToken)
@@ -107,7 +107,7 @@ func getRouter(hdl *handlers.Handler) *chi.Mux {
 				r.Route("/users", func(r chi.Router) {
 					r.Get("/", hdl.ListUsers)
 					r.Post("/", hdl.AddUser)
-					r.Route("/{Id}", func(r chi.Router) {
+					r.Route("/{id}", func(r chi.Router) {
 						r.Use(hdl.IdMiddleware)
 						r.Use(hdl.ValidateUserMiddleware)
 						r.Get("/", hdl.GetUser)
@@ -121,7 +121,7 @@ func getRouter(hdl *handlers.Handler) *chi.Mux {
 				r.Route("/tasks", func(r chi.Router) {
 					r.Get("/", hdl.ListTasks)
 
-					r.Route("/{Id}", func(r chi.Router) {
+					r.Route("/{id}", func(r chi.Router) {
 						r.Use(hdl.IdMiddleware)
 						r.Get("/", hdl.GetTask)
 						r.Put("/", hdl.UpdateTask)
