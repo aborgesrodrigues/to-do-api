@@ -33,7 +33,7 @@ func (d *dbTestSuite) TestAddUser() {
 
 	for index, test := range tests {
 		d.Run(index, func() {
-			mockInsert := d.mock.ExpectExec("INSERT INTO public.user").WithArgs(test.user.Id, test.user.Username, test.user.Name)
+			mockInsert := d.mock.ExpectExec("INSERT INTO public.user").WithArgs(test.user.Id, test.user.Username, test.user.Name, test.user.Password)
 			if test.dbError == nil {
 				mockInsert.WillReturnResult(sqlmock.NewResult(1, 1))
 			} else {
@@ -73,7 +73,7 @@ func (d *dbTestSuite) TestUpdateUser() {
 
 	for index, test := range tests {
 		d.Run(index, func() {
-			mockUpdate := d.mock.ExpectExec("UPDATE public.user").WithArgs(test.user.Username, test.user.Name, test.user.Id)
+			mockUpdate := d.mock.ExpectExec("UPDATE public.user").WithArgs(test.user.Username, test.user.Name, test.user.Password, test.user.Id)
 			if test.dbError == nil {
 				mockUpdate.WillReturnResult(sqlmock.NewResult(1, 1))
 			} else {
@@ -92,8 +92,9 @@ func (d *dbTestSuite) TestGetUser() {
 	user := &common.User{
 		Username: "username1",
 		Name:     "User Name 1",
+		Password: "password1",
 	}
-	rowUser := sqlmock.NewRows([]string{"id", "username", "name"}).AddRow("", user.Username, user.Name)
+	rowUser := sqlmock.NewRows([]string{"id", "username", "name", "password"}).AddRow("", user.Username, user.Name, user.Password)
 
 	tests := map[string]struct {
 		id           string
@@ -118,7 +119,7 @@ func (d *dbTestSuite) TestGetUser() {
 
 	for index, test := range tests {
 		d.Run(index, func() {
-			mockGet := d.mock.ExpectQuery("SELECT id, username, name FROM public.user").WithArgs(test.id)
+			mockGet := d.mock.ExpectQuery("SELECT id, username, name, password FROM public.user").WithArgs(test.id)
 			if test.dbError == nil {
 				mockGet.WillReturnRows(test.dbRowUser)
 			} else {

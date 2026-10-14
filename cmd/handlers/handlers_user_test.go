@@ -163,7 +163,7 @@ func (hdl *handlerTestSuite) TestGetUser() {
 	}{
 		"success": {
 			svcError:     nil,
-			expectedResp: `{"id":"0001","username":"username1","name":"User Name 1"}`,
+			expectedResp: `{"id":"0001","username":"username1","name":"User Name 1","password":""}`,
 		},
 		"fail": {
 			svcError:     errGetUser,
@@ -270,7 +270,7 @@ func (hdl *handlerTestSuite) TestListUsers() {
 		"success": {
 			users:        users,
 			svcError:     nil,
-			expectedResp: `[{"id":"0001","username":"username1","name":"User Name 1"},{"id":"0002","username":"username2","name":"User Name 2"}]`,
+			expectedResp: `[{"id":"0001","username":"username1","name":"User Name 1","password":""},{"id":"0002","username":"username2","name":"User Name 2","password":""}]`,
 		},
 		"fail": {
 			svcError:     errGetUsers,
@@ -297,6 +297,78 @@ func (hdl *handlerTestSuite) TestListUsers() {
 			}
 			hdl.Assert().Equal(test.expectedResp, strings.TrimSpace(rr.Body.String()))
 		})
+	}
+}
+
+func (hdl *handlerTestSuite) TestAddTask() {
+	idUser := "00001"
+	task := &common.Task{
+		UserId:      idUser,
+		Description: "description 1",
+		State:       "to_do",
+		User: &common.User{
+			Id: idUser,
+		},
+	}
+
+	// We create a ResponseRecorder (which satisfies http.ResponseWriter) to record the response.
+	handler := http.HandlerFunc(hdl.handler.AddTask)
+
+	ctx := context.WithValue(context.Background(), idCtx, idUser)
+
+	errAddTask := errors.New("error inserting task")
+	tests := map[string]struct {
+		task         *common.Task
+		svcError     error
+		expectedResp string
+	}{
+		"success": {
+			task:         task,
+			svcError:     nil,
+			expectedResp: `{"message":"Task Added"}`,
+		},
+		"fail": {
+			task:         task,
+			svcError:     errAddTask,
+			expectedResp: `"error inserting task"`,
+		},
+	}
+
+	for index, test := range tests {
+		hdl.Run(index, func() {
+			rr := httptest.NewRecorder()
+			var buf bytes.Buffer
+			err := json.NewEncoder(&buf).Encode(task)
+			hdl.Assert().NoError(err)
+
+			// Create a request to pass to our handler.
+			req := httptest.NewRequest("POST", fmt.Sprintf("/users/%s/tasks", idUser), io.NopCloser(&buf)).WithContext(ctx)
+			id := uuid.New().String()
+			responseTask := &common.Task{
+				Id:          id,
+				Description: test.task.Description,
+				UserId:      test.task.UserId,
+				State:       test.task.State,
+			}
+
+			// set up service mock
+			hdl.getService().
+				AddTask(test.task).
+				Return(responseTask, test.svcError)
+
+			handler.ServeHTTP(rr, req)
+			if test.svcError == nil {
+				hdl.Assert().Equal(http.StatusCreated, rr.Code)
+				err = json.NewDecoder(rr.Body).Decode(responseTask)
+				hdl.Assert().NoError(err)
+				hdl.Assert().Equal(id, responseTask.Id)
+				hdl.Assert().NotEmpty(responseTask.Id)
+			} else {
+				hdl.Assert().Equal(http.StatusInternalServerError, rr.Code)
+				hdl.Assert().Equal(test.expectedResp, strings.TrimSpace(rr.Body.String()))
+			}
+		})
+
 	}
 }
 

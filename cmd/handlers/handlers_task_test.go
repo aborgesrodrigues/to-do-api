@@ -11,88 +11,30 @@ import (
 	"strings"
 
 	"github.com/aborgesrodrigues/to-do-api/internal/common"
-	"github.com/google/uuid"
 )
 
-func (hdl *handlerTestSuite) TestAddTask() {
-	task := &common.Task{
-		UserId:      "00001",
-		Description: "description 1",
-		State:       "to_do",
-	}
-
-	// We create a ResponseRecorder (which satisfies http.ResponseWriter) to record the response.
-	handler := http.HandlerFunc(hdl.handler.AddTask)
-
-	errAddTask := errors.New("error inserting task")
-	tests := map[string]struct {
-		task         *common.Task
-		svcError     error
-		expectedResp string
-	}{
-		"success": {
-			task:         task,
-			svcError:     nil,
-			expectedResp: `{"message":"Task Added"}`,
-		},
-		"fail": {
-			task:         task,
-			svcError:     errAddTask,
-			expectedResp: `"error inserting task"`,
-		},
-	}
-
-	for index, test := range tests {
-		hdl.Run(index, func() {
-			rr := httptest.NewRecorder()
-			var buf bytes.Buffer
-			err := json.NewEncoder(&buf).Encode(task)
-			hdl.Assert().NoError(err)
-
-			// Create a request to pass to our handler.
-			req := httptest.NewRequest("POST", "/tasks", io.NopCloser(&buf))
-			id := uuid.New().String()
-			responseTask := &common.Task{
-				Id:          id,
-				Description: test.task.Description,
-				UserId:      test.task.UserId,
-				State:       test.task.State,
-			}
-
-			// set up service mock
-			hdl.getService().
-				AddTask(test.task).
-				Return(responseTask, test.svcError)
-
-			handler.ServeHTTP(rr, req)
-			if test.svcError == nil {
-				hdl.Assert().Equal(http.StatusCreated, rr.Code)
-				err = json.NewDecoder(rr.Body).Decode(responseTask)
-				hdl.Assert().NoError(err)
-				hdl.Assert().Equal(id, responseTask.Id)
-				hdl.Assert().NotEmpty(responseTask.Id)
-			} else {
-				hdl.Assert().Equal(http.StatusInternalServerError, rr.Code)
-				hdl.Assert().Equal(test.expectedResp, strings.TrimSpace(rr.Body.String()))
-			}
-		})
-
-	}
-}
-
 func (hdl *handlerTestSuite) TestUpdateTask() {
+	idUser := "00001"
 	idTask := "0001"
 	task := &common.Task{
 		Id:          idTask,
-		UserId:      "00001",
+		UserId:      idUser,
 		Description: "description 1",
 		State:       "to_do",
+		User: &common.User{
+			Id: idUser,
+		},
 	}
 
 	// We create a ResponseRecorder (which satisfies http.ResponseWriter) to record the response.
 	handler := http.HandlerFunc(hdl.handler.UpdateTask)
 
 	ctx := context.WithValue(context.Background(), idCtx, idTask)
+	ctx = context.WithValue(ctx, claimsKey,
+		&common.Claims{
+			UserID: idUser,
+		},
+	)
 
 	errUpdateTask := errors.New("error updating task")
 	tests := map[string]struct {
@@ -124,6 +66,10 @@ func (hdl *handlerTestSuite) TestUpdateTask() {
 
 			// set up service mock
 			hdl.getService().
+				GetTask(idTask).
+				Return(test.task, nil)
+
+			hdl.getService().
 				UpdateTask(test.task).
 				Return(test.task, test.svcError)
 
@@ -143,17 +89,26 @@ func (hdl *handlerTestSuite) TestUpdateTask() {
 
 func (hdl *handlerTestSuite) TestGetTask() {
 	idTask := "0001"
+	idUser := "00001"
 	task := &common.Task{
 		Id:          idTask,
-		UserId:      "00001",
+		UserId:      idUser,
 		Description: "description 1",
 		State:       "to_do",
+		User: &common.User{
+			Id: idUser,
+		},
 	}
 
 	// We create a ResponseRecorder (which satisfies http.ResponseWriter) to record the response.
 	handler := http.HandlerFunc(hdl.handler.GetTask)
 
 	ctx := context.WithValue(context.Background(), idCtx, idTask)
+	ctx = context.WithValue(ctx, claimsKey,
+		&common.Claims{
+			UserID: idUser,
+		},
+	)
 
 	errGetTask := errors.New("error retrieving task")
 	tests := map[string]struct {
@@ -162,7 +117,7 @@ func (hdl *handlerTestSuite) TestGetTask() {
 	}{
 		"success": {
 			svcError:     nil,
-			expectedResp: `{"id":"0001","user_id":"00001","description":"description 1","state":"to_do"}`,
+			expectedResp: `{"id":"0001","user_id":"00001","description":"description 1","state":"to_do","user":{"id":"00001","username":"","name":"","password":""}}`,
 		},
 		"fail": {
 			svcError:     errGetTask,
@@ -198,11 +153,27 @@ func (hdl *handlerTestSuite) TestGetTask() {
 
 func (hdl *handlerTestSuite) TestDeleteTask() {
 	idTask := "0001"
+	idUser := "00001"
+
+	task := &common.Task{
+		Id:          idTask,
+		UserId:      idUser,
+		Description: "description 1",
+		State:       "to_do",
+		User: &common.User{
+			Id: idUser,
+		},
+	}
 
 	// We create a ResponseRecorder (which satisfies http.ResponseWriter) to record the response.
 	handler := http.HandlerFunc(hdl.handler.DeleteTask)
 
 	ctx := context.WithValue(context.Background(), idCtx, idTask)
+	ctx = context.WithValue(ctx, claimsKey,
+		&common.Claims{
+			UserID: idUser,
+		},
+	)
 
 	errDeleteTask := errors.New("error deleting task")
 	tests := map[string]struct {
@@ -227,6 +198,10 @@ func (hdl *handlerTestSuite) TestDeleteTask() {
 			req := httptest.NewRequest("DELETE", "/tasks/"+idTask, nil).WithContext(ctx)
 
 			// set up service mock
+			hdl.getService().
+				GetTask(idTask).
+				Return(task, nil)
+
 			hdl.getService().
 				DeleteTask(idTask).
 				Return(test.svcError)

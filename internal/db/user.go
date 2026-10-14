@@ -45,7 +45,7 @@ func (db *DB) UpdateUser(user *common.User) error {
 
 func (db *DB) GetUser(id string) (*common.User, error) {
 	results, err := db.db.Query(`
-		SELECT id, username, name, username
+		SELECT id, username, name, password
 		FROM public.user
 		WHERE id= $1`, id)
 

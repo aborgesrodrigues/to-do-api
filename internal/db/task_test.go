@@ -8,11 +8,15 @@ import (
 )
 
 func (d *dbTestSuite) TestAddTask() {
+	idUser := "0001"
 	errAddTask := errors.New("error inserting task")
 	task := &common.Task{
-		UserId:      "0001",
+		UserId:      idUser,
 		Description: "description 1",
 		State:       "to_do",
+		User: &common.User{
+			Id: idUser,
+		},
 	}
 
 	tests := map[string]struct {
