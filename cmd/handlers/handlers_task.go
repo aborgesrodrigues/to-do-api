@@ -49,7 +49,7 @@ func (handler *Handler) UpdateTask(w http.ResponseWriter, r *http.Request) {
 	claims := r.Context().Value(claimsKey).(*common.Claims)
 	if savedTask.User.Id != claims.UserID {
 		handler.Logger.Error("Id doesn't match with token.")
-		writeResponse(w, http.StatusForbidden, "Id doesn't match with token."))
+		writeResponse(w, http.StatusForbidden, "Id doesn't match with token.")
 		return
 	}
 
@@ -80,7 +80,7 @@ func (handler *Handler) GetTask(w http.ResponseWriter, r *http.Request) {
 	claims := r.Context().Value(claimsKey).(*common.Claims)
 	if task.User.Id != claims.UserID {
 		handler.Logger.Error("Id doesn't match with token.")
-		writeResponse(w, http.StatusForbidden, "Id doesn't match with token."))
+		writeResponse(w, http.StatusForbidden, "Id doesn't match with token.")
 		return
 	}
 
@@ -101,7 +101,7 @@ func (handler *Handler) DeleteTask(w http.ResponseWriter, r *http.Request) {
 	claims := r.Context().Value(claimsKey).(*common.Claims)
 	if task.User.Id != claims.UserID {
 		handler.Logger.Error("Id doesn't match with token.")
-		writeResponse(w, http.StatusForbidden, "Id doesn't match with token."))
+		writeResponse(w, http.StatusForbidden, "Id doesn't match with token.")
 		return
 	}
 
