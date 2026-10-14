@@ -3,13 +3,13 @@ package handlers
 import (
 	"encoding/json"
 	"net/http"
+	"os"
 	"time"
 
 	"github.com/aborgesrodrigues/to-do-api/internal/common"
 	"github.com/aborgesrodrigues/to-do-api/internal/logging"
 	"github.com/aborgesrodrigues/to-do-api/internal/service"
 	"github.com/golang-jwt/jwt/v5"
-	"github.com/spf13/viper"
 	"go.uber.org/zap"
 )
 
@@ -35,7 +35,7 @@ func writeResponse(w http.ResponseWriter, status int, message interface{}) {
 }
 
 func generateJWT(user *common.User) (string, string, error) {
-	jwtSecretKey := viper.GetString(envJWTSecretKey)
+	jwtSecretKey := os.Getenv(envJWTSecretKey)
 
 	// access token
 	accessClaims := common.Claims{

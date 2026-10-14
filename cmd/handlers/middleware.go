@@ -6,6 +6,7 @@ import (
 	"errors"
 	"io"
 	"net/http"
+	"os"
 	"strconv"
 	"strings"
 	"time"
@@ -17,14 +18,14 @@ import (
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promauto"
-	"github.com/spf13/viper"
 	"go.uber.org/zap"
 )
 
 type ctxKey string
 
 const (
-	idCtx = ctxKey("Id")
+	idCtx     = ctxKey("Id")
+	claimsKey = ctxKey("claims")
 )
 
 func (handler *Handler) IdMiddleware(next http.Handler) http.Handler {
@@ -39,6 +40,24 @@ func (handler *Handler) IdMiddleware(next http.Handler) http.Handler {
 		if id == "" {
 			handler.Logger.Error("Id not passed.")
 			writeResponse(rw, http.StatusBadRequest, "Id not passed.")
+			return
+		}
+
+		next.ServeHTTP(rw, r)
+	})
+}
+
+func (handler *Handler) ValidateUserMiddleware(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(rw http.ResponseWriter, r *http.Request) {
+		id := chi.URLParam(r, string(idCtx))
+		if id != "" {
+			r = r.WithContext(context.WithValue(r.Context(), idCtx, id))
+		}
+
+		jwtClaims := r.Context().Value(claimsKey).(*common.Claims)
+		if jwtClaims.UserID != id {
+			handler.Logger.Error("Id doesn't match with token.")
+			writeResponse(rw, http.StatusForbidden, "Id doesn't match with token")
 			return
 		}
 
@@ -175,7 +194,8 @@ func (handler *Handler) VerifyJWT(next http.Handler) http.Handler {
 			return
 		}
 
-		next.ServeHTTP(rw, r)
+		ctx := context.WithValue(r.Context(), claimsKey, claims)
+		next.ServeHTTP(rw, r.WithContext(ctx))
 	})
 }
 
@@ -208,7 +228,7 @@ func (handler *Handler) validateJWT(r *http.Request) (*common.Claims, error) {
 	if headerToken := r.Header.Get("Authorization"); headerToken != "" {
 		headerToken = strings.Replace(headerToken, "Bearer ", "", 1)
 		token, err := jwt.ParseWithClaims(headerToken, &common.Claims{}, func(token *jwt.Token) (interface{}, error) {
-			jwtSecretKey := viper.GetString(envJWTSecretKey)
+			jwtSecretKey := os.Getenv(envJWTSecretKey)
 			return []byte(jwtSecretKey), nil
 		})
 

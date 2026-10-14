@@ -4,8 +4,8 @@ import (
 	"testing"
 
 	mock_db "github.com/aborgesrodrigues/to-do-api/internal/db/mock"
-	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/suite"
+	"go.uber.org/mock/gomock"
 	"go.uber.org/zap"
 )
 

@@ -2,22 +2,34 @@ package db
 
 import (
 	"database/sql"
+	"fmt"
+	"os"
 	"time"
 
 	_ "github.com/lib/pq"
-	"github.com/spf13/viper"
 	"go.uber.org/zap"
 )
 
 const (
-	envConnString = "CONN_STRING"
+	envDBUser     = "DB_USER"
+	envDBPassword = "DB_PASSWORD"
+	envDBHost     = "DB_HOST"
+	envDBPort     = "DB_PORT"
+	envDBDatabase = "DB_DATABASE"
 )
 
 func New(cfg Config) (*DB, error) {
 	logger := cfg.Logger
+	conn := fmt.Sprintf("host=%s user=%s password=%s dbname=%s port=%s sslmode=disable",
+		os.Getenv(envDBHost),
+		os.Getenv(envDBUser),
+		os.Getenv(envDBPassword),
+		os.Getenv(envDBDatabase),
+		os.Getenv(envDBPort),
+	)
 
-	logger.Debug(viper.GetString(envConnString))
-	db, err := sql.Open("postgres", viper.GetString(envConnString))
+	logger.Debug(conn)
+	db, err := sql.Open("postgres", conn)
 	if err != nil {
 		logger.Error("Error connecting to database", zap.Error(err))
 		return nil, err

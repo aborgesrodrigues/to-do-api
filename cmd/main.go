@@ -4,13 +4,13 @@ import (
 	"net/http"
 	"net/http/pprof"
 	_ "net/http/pprof"
+	"os"
 
 	"github.com/aborgesrodrigues/to-do-api/cmd/handlers"
 	"github.com/aborgesrodrigues/to-do-api/internal/audit"
 	"github.com/aborgesrodrigues/to-do-api/internal/logging"
 	"github.com/go-chi/chi/v5"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
-	"github.com/spf13/viper"
 
 	"go.uber.org/zap"
 )
@@ -24,12 +24,9 @@ const (
 )
 
 func main() {
-	// initiate viper
-	viper.AutomaticEnv()
-
 	logger := getLogger()
 	var s3Endpoint *string
-	if s3EndpointVal := viper.GetString(envVarAuditLogS3Endpoint); s3EndpointVal != "" {
+	if s3EndpointVal := os.Getenv(envVarAuditLogS3Endpoint); s3EndpointVal != "" {
 		s3Endpoint = &s3EndpointVal
 	}
 
@@ -87,11 +84,6 @@ func getRouter(hdl *handlers.Handler) *chi.Mux {
 			r.Get("/", promhttp.Handler().ServeHTTP)
 		})
 
-		// no JWT
-		r.Route("/token", func(r chi.Router) {
-			r.Post("/", hdl.AddUser)
-		})
-
 		// refresh token
 		r.Route("/users/{Id}/refresh_token", func(r chi.Router) {
 			r.Use(hdl.IdMiddleware)
@@ -101,33 +93,40 @@ func getRouter(hdl *handlers.Handler) *chi.Mux {
 
 		// with JWT
 		r.Route("/", func(r chi.Router) {
-			r.Use(logging.RequestLogger(hdl.Logger))
-			r.Use(handlers.AccessLogger(handlers.AccessLoggerOptions{
-				HTTPAuditLogger: hdl.AuditLogger,
-			}))
-			r.Use(hdl.VerifyJWT)
-			r.Use(hdl.Metrics)
+			r.Post("/token", hdl.AddUser)
+			r.Post("/login", hdl.Login)
 
-			r.Route("/users", func(r chi.Router) {
-				r.Get("/", hdl.ListUsers)
-				r.Post("/", hdl.AddUser)
-				r.Route("/{Id}", func(r chi.Router) {
-					r.Use(hdl.IdMiddleware)
-					r.Get("/", hdl.GetUser)
-					r.Put("/", hdl.UpdateUser)
-					r.Delete("/", hdl.DeleteUser)
-					r.Get("/tasks", hdl.ListUserTasks)
+			r.Group(func(r chi.Router) {
+				r.Use(logging.RequestLogger(hdl.Logger))
+				r.Use(handlers.AccessLogger(handlers.AccessLoggerOptions{
+					HTTPAuditLogger: hdl.AuditLogger,
+				}))
+				r.Use(hdl.VerifyJWT)
+				r.Use(hdl.Metrics)
+
+				r.Route("/users", func(r chi.Router) {
+					r.Get("/", hdl.ListUsers)
+					r.Post("/", hdl.AddUser)
+					r.Route("/{Id}", func(r chi.Router) {
+						r.Use(hdl.IdMiddleware)
+						r.Use(hdl.ValidateUserMiddleware)
+						r.Get("/", hdl.GetUser)
+						r.Put("/", hdl.UpdateUser)
+						r.Delete("/", hdl.DeleteUser)
+						r.Get("/tasks", hdl.ListUserTasks)
+						r.Post("/tasks", hdl.AddTask)
+					})
 				})
-			})
 
-			r.Route("/tasks", func(r chi.Router) {
-				r.Get("/", hdl.ListTasks)
-				r.Post("/", hdl.AddTask)
-				r.Route("/{Id}", func(r chi.Router) {
-					r.Use(hdl.IdMiddleware)
-					r.Get("/", hdl.GetTask)
-					r.Put("/", hdl.UpdateTask)
-					r.Delete("/", hdl.DeleteTask)
+				r.Route("/tasks", func(r chi.Router) {
+					r.Get("/", hdl.ListTasks)
+
+					r.Route("/{Id}", func(r chi.Router) {
+						r.Use(hdl.IdMiddleware)
+						r.Get("/", hdl.GetTask)
+						r.Put("/", hdl.UpdateTask)
+						r.Delete("/", hdl.DeleteTask)
+					})
 				})
 			})
 		})
@@ -147,7 +146,7 @@ func getLogger() *zap.Logger {
 }
 
 func requireENV(key string) string {
-	value := viper.GetString(key)
+	value := os.Getenv(key)
 	if value == "" {
 		panic(key + " not set")
 	}
