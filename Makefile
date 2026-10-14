@@ -2,17 +2,21 @@
 this_dir := $(dir $(abspath $(lastword $(MAKEFILE_LIST))))
 
 
+.PHONY: setup
+setup:
+	podman-compose -f docker-compose.setup.yml up
+
 .PHONY: clean
 clean:
-	docker-compose down
+	podman-compose  down
 
 .PHONY: run
 run:
-	docker-compose up -d --build
+	podman-compose  up -d --build
 
 .PHONY: support
 support:
-	docker-compose up -d db elasticsearch kibana filebeat localstack prometheus grafana
+	podman-compose  up -d db elasticsearch kibana filebeat localstack prometheus grafana
 
 .PHONY: complete_test
 complete_test:

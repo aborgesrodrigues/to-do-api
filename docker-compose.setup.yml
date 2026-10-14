@@ -12,4 +12,3 @@ services:
       - ./dev/elasticsearch/setup/instances.yml:/usr/share/elasticsearch/config/instances.yml:ro
     environment: 
       ELASTIC_PASSWORD: changeme
-
