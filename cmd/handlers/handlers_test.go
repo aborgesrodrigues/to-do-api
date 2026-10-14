@@ -6,8 +6,8 @@ import (
 	"github.com/aborgesrodrigues/to-do-api/internal/audit"
 	"github.com/aborgesrodrigues/to-do-api/internal/logging"
 	mock_service "github.com/aborgesrodrigues/to-do-api/internal/service/mock"
-	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/suite"
+	"go.uber.org/mock/gomock"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zaptest"
 )

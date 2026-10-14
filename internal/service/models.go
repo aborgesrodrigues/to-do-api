@@ -17,6 +17,7 @@ type SVCInterface interface {
 	AddUser(user *common.User) (*common.User, error)
 	UpdateUser(user *common.User) (*common.User, error)
 	GetUser(id string) (*common.User, error)
+	GetUserByUsername(username string) (*common.User, error)
 	DeleteUser(id string) error
 	ListUsers() ([]common.User, error)
 }

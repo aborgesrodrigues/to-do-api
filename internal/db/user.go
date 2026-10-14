@@ -1,17 +1,27 @@
 package db
 
 import (
+	"errors"
+
 	"github.com/aborgesrodrigues/to-do-api/internal/common"
+	"github.com/lib/pq"
 )
+
+var ErrUserAlreadyExists = errors.New("user already exists")
 
 func (db *DB) AddUser(user *common.User) error {
 	_, err := db.db.Exec(`
-		INSERT INTO public.user(id, username, name)
-		VALUES($1, $2, $3)
-	`, user.Id, user.Username, user.Name)
+		INSERT INTO public.user(id, username, name, password)
+		VALUES($1, $2, $3, $4)
+	`, user.Id, user.Username, user.Name, user.Password)
 
 	if err != nil {
 		db.logger.Error("Error inserting user.")
+
+		var pqErr *pq.Error
+		if errors.As(err, &pqErr) && pqErr.Code == "23505" {
+			return ErrUserAlreadyExists
+		}
 		return err
 	}
 
@@ -21,9 +31,9 @@ func (db *DB) AddUser(user *common.User) error {
 func (db *DB) UpdateUser(user *common.User) error {
 	_, err := db.db.Exec(`
 		UPDATE public.user
-		SET username = $1, name = $2
-		WHERE id = $3
-	`, user.Username, user.Name, user.Id)
+		SET username = $1, name = $2, password = $3
+		WHERE id = $4
+	`, user.Username, user.Name, user.Password, user.Id)
 
 	if err != nil {
 		db.logger.Error("Error updating user.")
@@ -35,7 +45,7 @@ func (db *DB) UpdateUser(user *common.User) error {
 
 func (db *DB) GetUser(id string) (*common.User, error) {
 	results, err := db.db.Query(`
-		SELECT id, username, name
+		SELECT id, username, name, username
 		FROM public.user
 		WHERE id= $1`, id)
 
@@ -49,7 +59,36 @@ func (db *DB) GetUser(id string) (*common.User, error) {
 		err = results.Scan(
 			&user.Id,
 			&user.Username,
-			&user.Name)
+			&user.Name,
+			&user.Password,
+		)
+		if err != nil {
+			db.logger.Error("Error mapping database data to struct.")
+			return nil, err
+		}
+	}
+	return &user, nil
+}
+
+func (db *DB) GetUserByUsername(username string) (*common.User, error) {
+	results, err := db.db.Query(`
+		SELECT id, username, name, password
+		FROM public.user
+		WHERE username= $1`, username)
+
+	if err != nil {
+		db.logger.Error("Error retrieving user.")
+		return nil, err
+	}
+
+	user := common.User{}
+	for results.Next() {
+		err = results.Scan(
+			&user.Id,
+			&user.Username,
+			&user.Name,
+			&user.Password,
+		)
 		if err != nil {
 			db.logger.Error("Error mapping database data to struct.")
 			return nil, err

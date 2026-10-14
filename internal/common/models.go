@@ -21,6 +21,7 @@ type User struct {
 	Id       string `json:"id"`
 	Username string `json:"username"`
 	Name     string `json:"name"`
+	Password string `json:"password"`
 }
 
 type Task struct {
@@ -40,4 +41,9 @@ type Claims struct {
 	jwt.RegisteredClaims
 	Type   tokenType `json:"type"`
 	UserID string    `json:"user_id"`
+}
+
+type Login struct {
+	Username string `json:"username"`
+	Password string `json:"password"`
 }

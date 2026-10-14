@@ -4,10 +4,18 @@ import (
 	"github.com/aborgesrodrigues/to-do-api/internal/common"
 	"github.com/google/uuid"
 	"go.uber.org/zap"
+	"golang.org/x/crypto/bcrypt"
 )
 
 func (svc *Service) AddUser(user *common.User) (*common.User, error) {
+	password, err := bcrypt.GenerateFromPassword([]byte(user.Password), 12)
+	if err != nil {
+		svc.logger.Error("Unable to generate password.", zap.Error(err))
+		return nil, err
+	}
+
 	user.Id = uuid.New().String()
+	user.Password = string(password)
 
 	if err := svc.db.AddUser(user); err != nil {
 		svc.logger.Error("Unable add user.", zap.Error(err))
@@ -18,6 +26,14 @@ func (svc *Service) AddUser(user *common.User) (*common.User, error) {
 }
 
 func (svc *Service) UpdateUser(user *common.User) (*common.User, error) {
+	password, err := bcrypt.GenerateFromPassword([]byte(user.Password), 12)
+	if err != nil {
+		svc.logger.Error("Unable to generate password.", zap.Error(err))
+		return nil, err
+	}
+
+	user.Password = string(password)
+
 	if err := svc.db.UpdateUser(user); err != nil {
 		svc.logger.Error("Unable add user.", zap.Error(err))
 		return nil, err
@@ -29,7 +45,23 @@ func (svc *Service) UpdateUser(user *common.User) (*common.User, error) {
 func (svc *Service) GetUser(id string) (*common.User, error) {
 	user, err := svc.db.GetUser(id)
 	if err != nil {
-		svc.logger.Error("Unable to retrieve users.", zap.Error(err))
+		svc.logger.Error("Unable to retrieve users.",
+			zap.String("id", id),
+			zap.Error(err),
+		)
+		return nil, err
+	}
+
+	return user, nil
+}
+
+func (svc *Service) GetUserByUsername(username string) (*common.User, error) {
+	user, err := svc.db.GetUserByUsername(username)
+	if err != nil {
+		svc.logger.Error("Unable to retrieve user.",
+			zap.String("username", username),
+			zap.Error(err),
+		)
 		return nil, err
 	}
 

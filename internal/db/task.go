@@ -8,7 +8,7 @@ func (db *DB) AddTask(task *common.Task) error {
 	_, err := db.db.Exec(`
 		INSERT INTO public.task(id, user_id, description, state)
 		VALUES($1, $2, $3, $4)
-	`, task.Id, task.UserId, task.Description, task.State)
+	`, task.Id, task.User.Id, task.Description, task.State)
 
 	if err != nil {
 		db.logger.Error("Error inserting task.")
