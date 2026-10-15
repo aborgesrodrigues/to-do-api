@@ -8,15 +8,15 @@ setup:
 
 .PHONY: clean
 clean:
-	podman-compose  down
+	podman-compose down
 
 .PHONY: run
 run:
-	podman-compose  up -d --build
+	podman-compose up -d --build
 
 .PHONY: support
 support:
-	podman-compose  up -d db elasticsearch kibana filebeat localstack prometheus grafana
+	podman-compose up -d db elasticsearch kibana filebeat localstack prometheus grafana
 
 .PHONY: complete_test
 complete_test:
@@ -49,3 +49,7 @@ deploy:
 .PHONY: undeploy
 undeploy:
 	kubectl delete -f dev/kubernetes --recursive
+
+.PHONY: generate_certificades
+generate_certificades:
+	podman-compose -f docker-compose.setup.yml up

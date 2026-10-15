@@ -78,12 +78,15 @@ services:
       - ./dev/db/initial.sql:/docker-entrypoint-initdb.d/initial.sql
   filebeat:
     user: root
+    userns_mode: keep-id
     image: docker.elastic.co/beats/filebeat:7.14.0
     command: filebeat -e -strict.perms=false
+    security_opt:
+      - label=disable
     volumes:
       - ./dev/filebeat/filebeat.docker.yml:/usr/share/filebeat/filebeat.yml
       # - /var/lib/docker/containers:/var/lib/docker/containers:ro
-      # - /var/run/docker.sock:/var/run/docker.sock:ro
+      - /run/user/501/podman/podman.sock:/var/run/docker.sock:ro
     secrets:
       - source: ca.crt
         target: /usr/share/filebeat/config/ca.crt
