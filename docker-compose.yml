@@ -72,6 +72,12 @@ services:
       - "4566:4566"
     volumes:
       - ./dev/localstack:/docker-entrypoint-initaws.d
+    healthcheck:
+      test: ["CMD-SHELL", "curl -sf http://localstack:4566/health || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 20
+      start_period: 60s
   prometheus:
     image: prom/prometheus:latest
     volumes:
