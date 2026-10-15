@@ -9,6 +9,18 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
+// Login godoc
+// @Summary      Log in and get tokens
+// @Description  Public endpoint. Validates the username and password and returns the user data along with an access token and a refresh token.
+// @Tags         auth
+// @Accept       json
+// @Produce      json
+// @Param        credentials  body      common.Login  true  "Login credentials"
+// @Success      201          {object}  common.AuthResponse
+// @Failure      400          {string}  string  "Invalid request body"
+// @Failure      403          {string}  string  "Invalid credentials"
+// @Failure      500          {string}  string  "Internal server error"
+// @Router       /login [post]
 func (handler *Handler) Login(w http.ResponseWriter, r *http.Request) {
 	request := &common.Login{}
 	if err := json.NewDecoder(r.Body).Decode(request); err != nil {

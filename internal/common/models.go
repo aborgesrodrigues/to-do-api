@@ -11,10 +11,16 @@ const (
 	RefreshTokenType = tokenType("REFRESH")
 )
 
+// AuthResponse is the response returned by the endpoints that issue tokens.
 type AuthResponse struct {
 	AccessToken  string `json:"access_token"`
 	RefreshToken string `json:"refresh_token"`
 	User         User   `json:"user"`
+}
+
+// MessageResponse is a simple response containing a message.
+type MessageResponse struct {
+	Message string `json:"message" example:"User Deleted"`
 }
 
 type User struct {

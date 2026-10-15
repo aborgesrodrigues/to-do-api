@@ -12,6 +12,8 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 
+	_ "github.com/aborgesrodrigues/to-do-api/docs"
+	httpSwagger "github.com/swaggo/http-swagger"
 	"go.uber.org/zap"
 )
 
@@ -23,6 +25,16 @@ const (
 	envVarAuditLogS3Region    = "AUDITLOG_S3_REGION"
 )
 
+// @title           To-Do API
+// @version         1.0
+// @description     API for managing users and their tasks.
+// @host            localhost:8080
+// @BasePath        /
+
+// @securityDefinitions.apikey BearerAuth
+// @in header
+// @name Authorization
+// @description Type "Bearer" followed by a space and the JWT token.
 func main() {
 	logger := getLogger()
 	var s3Endpoint *string
@@ -79,6 +91,9 @@ func getRouter(hdl *handlers.Handler) *chi.Mux {
 			r.Get("/mutex", pprof.Handler("mutex").ServeHTTP)
 			r.Get("/threadcreate", pprof.Handler("threadcreate").ServeHTTP)
 		})
+		r.Get("/swagger/*", httpSwagger.Handler(
+			httpSwagger.URL("http://localhost:8080/swagger/doc.json"),
+		))
 		r.Route("/metrics", func(r chi.Router) {
 			// Nenhum middleware aplicado aqui
 			r.Get("/", promhttp.Handler().ServeHTTP)
