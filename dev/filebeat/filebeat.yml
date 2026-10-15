@@ -1,0 +1,29 @@
+filebeat.autodiscover:
+  providers:
+    - type: docker
+      templates:
+        - condition:
+            contains:
+              docker.container.labels.logging: "true"
+          config:
+            - type: container
+              format: auto
+              paths:
+                # caminho dos logs do Podman (driver k8s-file), dentro da VM
+                - /var/lib/containers/storage/overlay-containers/${data.docker.container.id}/userdata/ctr.log
+
+processors:
+  - add_docker_metadata: ~
+  - decode_json_fields:
+      fields: ["message"]
+      target: ""
+      overwrite_keys: true
+      add_error_key: true
+
+setup.ilm.enabled: false
+setup.template.name: "go-logs"
+setup.template.pattern: "go-logs-*"
+
+output.elasticsearch:
+  hosts: ["http://elasticsearch:9200"]
+  index: "go-logs-%{+yyyy.MM.dd}"

@@ -16,7 +16,7 @@ run:
 
 .PHONY: support
 support:
-	podman-compose up -d db elasticsearch kibana filebeat localstack prometheus grafana
+	podman-compose up -d db elasticsearch filebeat localstack prometheus grafana
 
 .PHONY: complete_test
 complete_test:
