@@ -287,6 +287,66 @@ var reqLatencyHistogram = promauto.NewHistogramVec(prometheus.HistogramOpts{
 	},
 }, []string{"path", "status"})
 
+var serviceLatencyHistogram = promauto.NewHistogramVec(prometheus.HistogramOpts{
+	Name: "service_request_latency",
+	Help: "Latency of services process",
+	Buckets: []float64{
+		.1,
+		1,
+		25,
+		50,
+		100,
+		150,
+		200,
+		250,
+		500,
+		1000,
+		2500,
+		5000,
+		10000,
+	},
+}, []string{"path"})
+
+var jwtLatencyHistogram = promauto.NewHistogramVec(prometheus.HistogramOpts{
+	Name: "jwt_request_latency",
+	Help: "Latency of jwt generation",
+	Buckets: []float64{
+		.1,
+		1,
+		25,
+		50,
+		100,
+		150,
+		200,
+		250,
+		500,
+		1000,
+		2500,
+		5000,
+		10000,
+	},
+}, []string{"path"})
+
+var decodeLatencyHistogram = promauto.NewHistogramVec(prometheus.HistogramOpts{
+	Name: "decode_request_latency",
+	Help: "Latency of decoding request bodies",
+	Buckets: []float64{
+		.1,
+		1,
+		25,
+		50,
+		100,
+		150,
+		200,
+		250,
+		500,
+		1000,
+		2500,
+		5000,
+		10000,
+	},
+}, []string{"path"})
+
 var reqCount = promauto.NewCounterVec(prometheus.CounterOpts{
 	Name: "request_count",
 	Help: "Latency of HTTP requests",

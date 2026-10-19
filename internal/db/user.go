@@ -2,18 +2,27 @@ package db
 
 import (
 	"errors"
+	"time"
 
 	"github.com/aborgesrodrigues/to-do-api/internal/common"
 	"github.com/lib/pq"
+	"github.com/prometheus/client_golang/prometheus"
 )
 
 var ErrUserAlreadyExists = errors.New("user already exists")
 
 func (db *DB) AddUser(user *common.User) error {
+	start := time.Now()
+	labels := prometheus.Labels{
+		"table": "users",
+	}
+
 	_, err := db.db.Exec(`
 		INSERT INTO public.user(id, username, name, password)
 		VALUES($1, $2, $3, $4)
 	`, user.Id, user.Username, user.Name, user.Password)
+
+	dbExecutionLatencyHistogram.With(labels).Observe(float64(time.Since(start).Milliseconds()))
 
 	if err != nil {
 		db.logger.Error("Error inserting user.")

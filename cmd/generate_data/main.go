@@ -12,16 +12,28 @@ import (
 	"go.uber.org/zap"
 )
 
+var inputChan chan (common.User)
+
 func main() {
 	logger, _ := zap.NewDevelopment()
-	inputChan := make(chan common.User, 100)
+	inputChan = make(chan common.User, 100)
 	var wg sync.WaitGroup
+
+	adminUser := common.User{
+		Username: "admin",
+		Name:     "Admin",
+	}
+	response, err := doRequest[map[string]any](http.MethodPost, "http://localhost:8080/token", "", adminUser, logger)
+	if err != nil {
+		logger.Fatal("Error requesting", zap.Error(err))
+	}
+	adminBearerToken := (*response)["access_token"].(string)
 
 	for range 100 {
 		wg.Add(1)
 		go func() {
 			defer wg.Done()
-			worker(inputChan, logger)
+			worker(logger, adminBearerToken)
 		}()
 	}
 
@@ -30,6 +42,7 @@ func main() {
 			inputChan <- common.User{
 				Username: fmt.Sprintf("user%d", i+1),
 				Name:     fmt.Sprintf("User %d", i+1),
+				Password: fmt.Sprintf("password%d", i+1),
 			}
 		}
 
@@ -40,22 +53,14 @@ func main() {
 	logger.Info("Finished")
 }
 
-func worker(input chan common.User, logger *zap.Logger) {
-	adminUser := common.User{
-		Username: "admin",
-		Name:     "Admin",
-	}
-	response, err := doRequest[map[string]any](http.MethodPost, "http://localhost:8080/token", "", adminUser, logger)
-	if err != nil {
-		logger.Fatal("Error requesting", zap.Error(err))
-	}
-
-	bearerToken := (*response)["access_token"].(string)
-	for user := range input {
-		response, err := doRequest[map[string]any](http.MethodPost, "http://localhost:8080/users", bearerToken, user, logger)
+func worker(logger *zap.Logger, adminBearerToken string) {
+	for userInput := range inputChan {
+		response, err := doRequest[map[string]any](http.MethodPost, "http://localhost:8080/users", adminBearerToken, userInput, logger)
 		if err != nil {
 			logger.Fatal("Error requesting", zap.Error(err))
 		}
+
+		bearerToken := (*response)["access_token"].(string)
 
 		user := (*response)["user"].(map[string]any)
 		for i := range 20 {
@@ -65,7 +70,7 @@ func worker(input chan common.User, logger *zap.Logger) {
 				State:       common.TaskState("to_do"),
 			}
 
-			_, err := doRequest[map[string]any](http.MethodPost, "http://localhost:8080/tasks", bearerToken, task, logger)
+			_, err := doRequest[map[string]any](http.MethodPost, fmt.Sprintf("http://localhost:8080/users/%s/tasks", user["id"].(string)), bearerToken, task, logger)
 			if err != nil {
 				logger.Fatal("Error requesting", zap.Error(err))
 			}

@@ -7,6 +7,8 @@ import (
 	"time"
 
 	_ "github.com/lib/pq"
+	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/promauto"
 	"go.uber.org/zap"
 )
 
@@ -17,6 +19,26 @@ const (
 	envDBPort     = "DB_PORT"
 	envDBDatabase = "DB_DATABASE"
 )
+
+var dbExecutionLatencyHistogram = promauto.NewHistogramVec(prometheus.HistogramOpts{
+	Name: "db_execution_latency",
+	Help: "Latency of database execution",
+	Buckets: []float64{
+		.1,
+		1,
+		25,
+		50,
+		100,
+		150,
+		200,
+		250,
+		500,
+		1000,
+		2500,
+		5000,
+		10000,
+	},
+}, []string{"table"})
 
 func New(cfg Config) (*DB, error) {
 	logger := cfg.Logger
@@ -35,8 +57,8 @@ func New(cfg Config) (*DB, error) {
 		return nil, err
 	}
 
-	db.SetMaxOpenConns(10)                  // máximo de conexões abertas
-	db.SetMaxIdleConns(5)                   // máximo de conexões ociosas
+	db.SetMaxOpenConns(25)                  // máximo de conexões abertas
+	db.SetMaxIdleConns(25)                  // máximo de conexões ociosas
 	db.SetConnMaxLifetime(30 * time.Minute) // tempo máximo de vida da conexão
 	db.SetConnMaxIdleTime(5 * time.Minute)  // tempo máximo ocioso
 

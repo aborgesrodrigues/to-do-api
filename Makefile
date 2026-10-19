@@ -50,6 +50,6 @@ deploy:
 undeploy:
 	kubectl delete -f dev/kubernetes --recursive
 
-.PHONY: generate_certificades
-generate_certificades:
-	podman-compose -f docker-compose.setup.yml up
+.PHONY: generate_data
+generate_data:
+	go run cmd/generate_data/main.go

@@ -1,14 +1,24 @@
 package db
 
 import (
+	"time"
+
 	"github.com/aborgesrodrigues/to-do-api/internal/common"
+	"github.com/prometheus/client_golang/prometheus"
 )
 
 func (db *DB) AddTask(task *common.Task) error {
+	start := time.Now()
+	labels := prometheus.Labels{
+		"table": "tasks",
+	}
+
 	_, err := db.db.Exec(`
 		INSERT INTO public.task(id, user_id, description, state)
 		VALUES($1, $2, $3, $4)
 	`, task.Id, task.User.Id, task.Description, task.State)
+
+	dbExecutionLatencyHistogram.With(labels).Observe(float64(time.Since(start).Milliseconds()))
 
 	if err != nil {
 		db.logger.Error("Error inserting task.")
