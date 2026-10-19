@@ -163,13 +163,12 @@ func AccessLogger(opt AccessLoggerOptions) func(next http.Handler) http.Handler 
 			}
 
 			delay := time.Since(startMetric).Milliseconds()
-			labels := prometheus.Labels{
-				"disable_request_audit_logs":  strconv.FormatBool(opt.HTTPAuditLogger.Opt.DisableResponseAuditLogs),
-				"disable_response_audit_logs": strconv.FormatBool(opt.HTTPAuditLogger.Opt.DisableResponseAuditLogs),
-				"buffer_size":                 strconv.Itoa(opt.HTTPAuditLogger.Opt.Config.BufferSize),
-			}
 
-			reqLatencyAuditHistogram.With(labels).Observe(float64(delay))
+			reqLatencyAuditHistogram.WithLabelValues(
+				strconv.FormatBool(opt.HTTPAuditLogger.Opt.DisableResponseAuditLogs),
+				strconv.FormatBool(opt.HTTPAuditLogger.Opt.DisableResponseAuditLogs),
+				strconv.Itoa(opt.HTTPAuditLogger.Opt.Config.BufferSize),
+			).Observe(float64(delay))
 		})
 	}
 }
@@ -360,12 +359,8 @@ func (handler *Handler) Metrics(next http.Handler) http.Handler {
 		next.ServeHTTP(ww, r)
 
 		delay := time.Since(start).Milliseconds()
-		labels := prometheus.Labels{
-			"path":   r.URL.Path,
-			"status": strconv.Itoa(ww.Status()),
-		}
 
-		reqLatencyHistogram.With(labels).Observe(float64(delay))
-		reqCount.With(labels).Inc()
+		reqLatencyHistogram.WithLabelValues(r.URL.Path, strconv.Itoa(ww.Status())).Observe(float64(delay))
+		reqCount.WithLabelValues(r.URL.Path, strconv.Itoa(ww.Status())).Inc()
 	})
 }

@@ -6,7 +6,6 @@ import (
 	"time"
 
 	"github.com/aborgesrodrigues/to-do-api/internal/common"
-	"github.com/prometheus/client_golang/prometheus"
 	"go.uber.org/zap"
 )
 
@@ -24,9 +23,7 @@ import (
 // @Router       /token [post]
 func (handler *Handler) AddUser(w http.ResponseWriter, r *http.Request) {
 	start := time.Now()
-	labels := prometheus.Labels{
-		"path": r.URL.Path,
-	}
+
 	request := &common.User{}
 	if err := json.NewDecoder(r.Body).Decode(request); err != nil {
 		handler.Logger.Error("Unable to decode request body.", zap.Error(err))
@@ -34,7 +31,7 @@ func (handler *Handler) AddUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	decodeLatencyHistogram.With(labels).Observe(float64(time.Since(start).Milliseconds()))
+	decodeLatencyHistogram.WithLabelValues(r.URL.Path).Observe(float64(time.Since(start).Milliseconds()))
 	start = time.Now()
 
 	user, err := handler.svc.AddUser(request)
@@ -44,7 +41,7 @@ func (handler *Handler) AddUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	serviceLatencyHistogram.With(labels).Observe(float64(time.Since(start).Milliseconds()))
+	serviceLatencyHistogram.WithLabelValues(r.URL.Path).Observe(float64(time.Since(start).Milliseconds()))
 	start = time.Now()
 
 	accessToken, refreshToken, err := generateJWT(user)
@@ -54,7 +51,7 @@ func (handler *Handler) AddUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	jwtLatencyHistogram.With(labels).Observe(float64(time.Since(start).Milliseconds()))
+	jwtLatencyHistogram.WithLabelValues(r.URL.Path).Observe(float64(time.Since(start).Milliseconds()))
 
 	writeResponse(w, http.StatusCreated,
 		map[string]any{
@@ -233,9 +230,6 @@ func (handler *Handler) RefreshToken(w http.ResponseWriter, r *http.Request) {
 // @Router       /users/{id}/tasks [post]
 func (handler *Handler) AddTask(w http.ResponseWriter, r *http.Request) {
 	start := time.Now()
-	labels := prometheus.Labels{
-		"path": r.URL.Path,
-	}
 
 	userID := r.Context().Value(idCtx).(string)
 
@@ -246,7 +240,7 @@ func (handler *Handler) AddTask(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	decodeLatencyHistogram.With(labels).Observe(float64(time.Since(start).Milliseconds()))
+	decodeLatencyHistogram.WithLabelValues(r.URL.Path).Observe(float64(time.Since(start).Milliseconds()))
 	start = time.Now()
 
 	request.User = &common.User{
@@ -258,7 +252,7 @@ func (handler *Handler) AddTask(w http.ResponseWriter, r *http.Request) {
 		writeResponse(w, http.StatusInternalServerError, err.Error())
 		return
 	}
-	serviceLatencyHistogram.With(labels).Observe(float64(time.Since(start).Milliseconds()))
+	serviceLatencyHistogram.WithLabelValues(r.URL.Path).Observe(float64(time.Since(start).Milliseconds()))
 
 	writeResponse(w, http.StatusCreated, task)
 }

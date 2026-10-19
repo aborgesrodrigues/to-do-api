@@ -53,3 +53,20 @@ undeploy:
 .PHONY: generate_data
 generate_data:
 	go run cmd/generate_data/main.go
+
+.PHONY: generate_trace
+generate_trace:
+	curl -o trace.out "http://localhost:8080/debug/pprof/trace?seconds=10" && go tool trace trace.out  
+
+.PHONY: pprof_heap
+pprof_heap:
+	go tool pprof -http=:9091 http://localhost:8080/debug/pprof/heap
+
+.PHONY: pprof_allocs
+pprof_allocs:
+	go tool pprof -http=:9092 http://localhost:8080/debug/pprof/allocs
+
+.PHONY: pprof_cpu
+pprof_cpu:
+	go tool pprof -http=:9091 http://localhost:8080/debug/pprof/profile?seconds=300
+# 	curl -o profile.out "http://localhost:8080/debug/pprof/profile?seconds=300" && go tool pprof profile.out  
